@@ -1,0 +1,197 @@
+﻿@section Styles {
+    <link rel="stylesheet" href="~/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
+    
+    <link rel="stylesheet" href="~/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
+    
+    <link rel="stylesheet" href="~/plugins/datatables-buttons/css/buttons.bootstrap4.min.css">
+}
+@{
+    ViewData["Title"] = "Trang Chủ Tổng Quan";
+}
+
+<section class="content-header">
+    <div class="container-fluid">
+        <h1 class="m-0">Dashboard Tổng Quan</h1>
+    </div>
+</section>
+<section class="content">
+    <div class="container-fluid">
+
+        <div class="row">
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-info">
+                    <div class="inner">
+                        <h3>18.990.000</h3>
+                        <p>Doanh Thu Hôm Nay</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                    <a href="#" class="small-box-footer">
+                        Xem chi tiết <i class="fas fa-arrow-circle-right"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-success">
+                    <div class="inner">
+                        <h3>1,250<sup style="font-size: 20px">SP</sup></h3>
+                        <p>Tổng Số Lượng Tồn Kho</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-boxes"></i>
+                    </div>
+                    <a href="#" class="small-box-footer">
+                        Xem chi tiết <i class="fas fa-arrow-circle-right"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-warning">
+                    <div class="inner">
+                        <h3>44</h3>
+                        <p>Khách Hàng Mới Hôm Nay</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <a href="#" class="small-box-footer">
+                        Xem chi tiết <i class="fas fa-arrow-circle-right"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-danger">
+                    <div class="inner">
+                        <h3>65</h3>
+                        <p>Đơn Hàng Chờ Xử Lý</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <a href="#" class="small-box-footer">
+                        Xem chi tiết <i class="fas fa-arrow-circle-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <section class="col-lg-12">
+                <div class="card card-primary card-outline">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-chart-bar mr-1"></i>
+                            Biểu Đồ Doanh Thu 30 Ngày Gần Nhất
+                        </h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart">
+                            <canvas id="salesChart" style="min-height: 300px; height: 300px; max-height: 300px; max-width: 100%;"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+        </div></section>
+@section Scripts {
+    <script src="~/plugins/datatables/jquery.dataTables.min.js"></script>
+    <script src="~/plugins/chart.js/Chart.min.js"></script>
+    <script src="~/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+    <script src="~/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
+    <script src="~/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
+    <script src="~/plugins/datatables-buttons/js/dataTables.buttons.min.js"></script>
+    <script src="~/plugins/datatables-buttons/js/buttons.bootstrap4.min.js"></script>
+    <script src="~/plugins/jszip/jszip.min.js"></script>
+    <script src="~/plugins/pdfmake/pdfmake.min.js"></script>
+    <script src="~/plugins/pdfmake/vfs_fonts.js"></script>  
+    <script src="~/plugins/datatables-buttons/js/buttons.html5.min.js"></script>
+    <script src="~/plugins/datatables-buttons/js/buttons.print.min.js"></script>
+    <script src="~/plugins/datatables-buttons/js/buttons.colVis.min.js"></script>
+    <script>
+        $(function () {
+            // 1. TẠO DỮ LIỆU GIẢ LẬP 30 NGÀY
+            
+            var labels30Days = [];
+            var data30Days = [];
+
+            // Hàm tạo số ngẫu nhiên trong khoảng [min, max]
+            function getRandomData(min, max) {
+                return Math.floor(Math.random() * (max - min + 1)) + min;
+            }
+
+            // Tạo nhãn (1, 2, ..., 30) và dữ liệu ngẫu nhiên (từ 1000 đến 9900)
+            for (let i = 1; i <= 30; i++) {
+                labels30Days.push(i); // Nhãn: 1, 2, 3, ..., 30
+                data30Days.push(getRandomData(10, 999)); // Dữ liệu ngẫu nhiên
+            }
+
+            // 2. CẤU HÌNH CHART.JS
+            var salesChartCanvas = $('#salesChart').get(0).getContext('2d');
+
+            var salesChartData = {
+                // Sử dụng 30 nhãn ngày đã tạo
+                labels: labels30Days, 
+                datasets: [
+                    {
+                        label: 'Doanh Thu (Triệu VND)',
+                        backgroundColor: '#62bb62dd',
+                        borderColor: '#62bb62dd',
+                        pointRadius: true, // Hiển thị chấm tròn tại mỗi ngày
+                        pointColor: '#62bb62dd',
+                        pointStrokeColor: '#62bb62dd',
+                        pointHighlightFill: '#fff',
+                        pointHighlightStroke: '#62bb62dd',
+                        // Sử dụng 30 giá trị dữ liệu đã tạo
+                        data: data30Days 
+                    }
+                ]
+            };
+
+            var salesChartOptions = {
+                maintainAspectRatio: false,
+                responsive: true,
+                legend: { display: true }, // Hiển thị nhãn 'Doanh Thu'
+                scales: {
+                    xAxes: [{ 
+                        gridLines: { display: false } // Ẩn lưới dọc cho đỡ rối
+                    }],
+                    yAxes: [{ 
+                        gridLines: { display: true },
+                        ticks: {
+                            // Định dạng hiển thị tiền tệ
+                            callback: function(value, index, values) {
+                                return value.toLocaleString('vi-VN') + 'Triệu';
+                            }
+                        }
+                    }]
+                },
+                tooltips: {
+                    callbacks: {
+                        label: function(tooltipItem, data) {
+                            var label = data.datasets[tooltipItem.datasetIndex].label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            // Định dạng hiển thị tiền tệ khi hover
+                            label += tooltipItem.yLabel.toLocaleString('vi-VN') + 'Triệu VND';
+                            return label;
+                        }
+                    }
+                }
+            };
+
+            // Khởi tạo Bar Chart
+            new Chart(salesChartCanvas, 
+            {
+                type: 'bar', 
+                data: salesChartData,
+                options: salesChartOptions
+            });
+        });
+    </script>   
+}
