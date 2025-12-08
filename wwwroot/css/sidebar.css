@@ -1,0 +1,31 @@
+/* Sidebar Nền Xanh Lá (#28a745 là màu xanh lá chuẩn AdminLTE) */
+.main-sidebar, .main-sidebar::before {
+    background-color: #28a745 !important; 
+}
+
+/* Đổi màu chữ của menu sang màu trắng */
+.nav-sidebar > .nav-item > .nav-link,
+.brand-text,
+.brand-link {
+    color: #fff !important; 
+}
+
+/* Đổi màu icon sang màu trắng */
+.nav-sidebar > .nav-item > .nav-link > .nav-icon {
+    color: #fff !important;
+}
+
+/* Đổi màu khi hover (chuột di chuyển qua) */
+.nav-sidebar .nav-item:hover > .nav-link {
+    background-color: #208738 !important; /* Xanh lá nhạt hơn khi hover */
+}
+
+/* Đổi màu cho menu đang Active (đang chọn) */
+.nav-sidebar > .nav-item > .nav-link.active {
+    background-color: #007bff !important; /* Xanh dương nổi bật khi active */
+    color: #fff !important;
+}
+
+.nav-sidebar > .nav-item > .nav-link.active i.nav-icon {
+    color: #fff !important;
+}

@@ -1,0 +1,618 @@
+@{
+    ViewBag.Title = "Quản lý kho";
+    Layout = "/Views/Shared/_Layout.cshtml";
+}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<style>
+    /* Sử dụng biến CSS để quản lý màu sắc nhất quán, ĐỒNG BỘ VỚI NCC: #28a745 */
+    :root {
+        --primary-green-dark: #28a745; 
+        --table-header-bg: white; 
+        --table-header-color: #4a4a4a; 
+        --background-color: #f7fcf7;
+        --shadow-color: rgba(0, 0, 0, 0.08);
+        --border-color: #e1e1e1; /* Viền nhẹ hơn */
+        --action-blue: #007bff; /* Màu xanh dương cho phân trang/nút xuất file */
+        --light-green-border: #28a745; /* Viền nhẹ hơn cho input */
+    }
+
+    /* ====== MÀU VÀ GIAO DIỆN CHUNG ====== */
+    body {
+        background-color: var(--background-color);
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+     .text-success, h4.text-success, h5.text-success, .filter-label {
+        color: var(--primary-green-dark) !important;
+    }
+    .btn-xanhbo {
+        background-color: var(--primary-green-dark);
+        color: #fff;
+        border: none;
+        transition: 0.3s;
+        font-weight: 500;
+        border-radius: 6px;
+        padding: 8px 15px;
+        font-size: 14px;
+    }
+    .btn-xanhbo:hover {
+        background-color: #218838; 
+        color: #fff;
+    }
+    
+    /* Nút Xuất file (Đồng bộ với NCC) */
+    .btn-action-blue {
+        background-color: var(--action-blue);
+        color: #fff;
+        border: none;
+        transition: 0.2s;
+        font-weight: 500;
+        border-radius: 6px;
+        padding: 8px 15px;
+        font-size: 14px;
+    }
+    .btn-action-blue:hover {
+        background-color: #0069d9;
+        color: #fff;
+    }
+
+    .text-success, h4.text-success, .filter-label {
+        color: var(--primary-green-dark) !important;
+    }
+    h4.text-success {
+        color: #4a4a4a !important; /* Đổi màu tiêu đề chính */
+    }
+
+    /* ====== KHUNG LỌC (filter-card) ====== */
+    .filter-card {
+        background-color: #fff;
+        border-radius: 8px; 
+        box-shadow: 0 1px 6px var(--shadow-color);
+        padding: 18px;
+        border: 1px solid var(--border-color);
+    }
+    .filter-label {
+        font-weight: 600;
+        margin-bottom: 5px;
+        font-size: 14px;
+        color: #555; /* Màu chữ label đồng bộ */ 
+    }
+
+    .form-control, .form-select {
+        border-radius: 6px;
+        font-size: 14px;
+        border-color: var(--light-green-border);
+    }
+    
+    /* Focus */
+    .form-control:focus, .form-select:focus {
+        box-shadow: 0 0 0 0.15rem rgba(40, 167, 69, 0.25);
+        border-color: var(--primary-green-dark);
+    }
+
+    /* ====== THANH TÌM KIẾM + NÚT (action-bar) ====== */
+    .action-bar {
+        background-color: #fff;
+        padding: 12px 16px;
+        border-radius: 8px; 
+        box-shadow: 0 1px 6px var(--shadow-color);
+        border: 1px solid var(--border-color);
+    }
+    #globalSearchBox {
+        font-size: 14px;
+    }
+
+    /* ====== BẢNG DỮ LIỆU ====== */
+    .table-responsive {
+        border-radius: 8px;
+        overflow: hidden; 
+        border: 1px solid var(--border-color);
+    }
+    .table th {
+        background-color: var(--table-header-bg) !important;
+        color: var(--table-header-color);
+        font-weight: 600;
+        font-size: 13px; /* Đồng bộ font size */
+        border-bottom: 2px solid #ddd !important;
+        border-top: none !important;
+        padding: 10px 8px;
+    }
+    
+    .table td {
+        font-size: 13px; /* Đồng bộ font size */
+        border-top: 1px solid #f0f0f0;
+        vertical-align: middle;
+        padding: 8px;
+    }
+    .table-hover > tbody > tr:hover {
+        background-color: #f5fff5; 
+    }
+
+    /* ĐỊNH DẠNG DATATABLES PHÂN TRANG (Đồng bộ với NCC) */
+    .dataTables_paginate .paginate_button.current, 
+    .dataTables_paginate .paginate_button.current:hover {
+        background: var(--action-blue) !important; 
+        color: white !important;
+        border-color: var(--action-blue) !important;
+        border-radius: 4px;
+    }
+    .dataTables_paginate .paginate_button {
+        border-radius: 4px;
+        padding: 5px 10px;
+    }
+    
+    /* Modal Header */
+    #newPartModal .modal-header {
+        background-color: var(--primary-green-dark) !important;
+        color: white;
+        border-bottom: none;
+    }
+    .btn-close-white {
+        filter: invert(1) grayscale(100%) brightness(200%);
+    }
+    .modal-title {
+        font-weight: 600;
+    }
+    /* Badge cho nhóm linh kiện (Đồng bộ với badge linh kiện của trang trước) */
+    .badge-linhkien-group { 
+        background-color: var(--primary-green-dark); /* Màu xanh lá đậm */
+        color: white; 
+        padding: 5px 8px; 
+        border-radius: 4px; 
+        font-size: 11px;
+        font-weight: 500;
+    }
+    /* Điều chỉnh style icon sửa để nhìn giống nút hơn */
+    .btn-action-edit {
+        background-color: var(--primary-green-dark); /* Màu xanh lá */
+        color: white;
+        border-radius: 4px;
+        padding: 5px 8px;
+        font-size: 13px;
+        transition: background-color 0.2s;
+    }
+    .btn-action-edit:hover {
+        background-color: #218838;
+        color: white;
+    }
+
+</style>
+
+<div class="container-fluid mt-4">
+    <div class="row g-4">
+        <div class="col-lg-3">
+            <div class="filter-card">
+                <h5 class="mb-3 text-success fw-bold"><i class="fa-solid fa-filter"></i> Bộ lọc Linh kiện</h5>
+
+                <div class="mb-3">
+                    <label class="filter-label" for="filterGroup">Nhóm linh kiện</label>
+                    <select id="filterGroup" class="form-select">
+                        <option value="">Tất cả nhóm linh kiện</option>
+                        <option>Ắc quy</option>
+                        <option>Động cơ</option>
+                        <option>Phanh - thắng</option>
+                        <option>Khung sườn</option>
+                        <option>Khác</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="filter-label" for="filterStock">Tồn kho</label>
+                    <select id="filterStock" class="form-select">
+                        <option value="">Tất cả tồn kho</option>
+                        <option value="available">Còn hàng</option>
+                        <option value="outOfStock">Hết hàng</option>
+                    </select>
+                </div>
+                
+            </div>
+        </div>
+
+        <div class="col-lg-9">
+            <h4 class="fw-bold text-success mb-3">
+                <i class="fa-solid fa-boxes-stacked"></i> Kho linh kiện
+            </h4>
+            
+            <div class="action-bar mb-3 d-flex justify-content-between flex-wrap align-items-center"> 
+                <input type="text" id="globalSearchBox" class="form-control me-2" placeholder="🔍 Theo mã, tên linh kiện/hàng hóa..." style="width: 250px;">
+                
+                <div class="d-flex align-items-center gap-2 mt-2 mt-md-0">
+                    <button class="btn btn-xanhbo" data-bs-toggle="modal" data-bs-target="#newPartModal">
+                        <i class="fa fa-plus"></i> Tạo mới
+                    </button>
+                    <button class="btn btn-action-blue" onclick="alert('Chức năng Xuất file chưa được lập trình.');">
+                        <i class="fa-solid fa-file-export"></i> Xuất file
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table id="partsTable" class="table table-hover bg-white" style="width:100%">
+                    <thead class="text-center">
+                        <tr>
+                            <th>Mã linh kiện</th>
+                            <th>Tên linh kiện</th> 
+                            <th>Nhóm linh kiện</th> 
+                            <th>Giá bán</th> 
+                            <th>Giá vốn</th> 
+                            <th>Tồn kho</th> 
+                            <th>Khách đặt</th> 
+                            <th>Thời gian tạo</th> 
+                            <th>Đặt NCC</th> 
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <div class="dataTables_info" id="partsTable_info" role="status" aria-live="polite"></div>
+                <div class="dataTables_paginate paging_simple_numbers" id="partsTable_paginate"></div>
+            </div>
+
+        </div> </div> </div>
+<<div class="modal fade" id="newPartModal" tabindex="-1" aria-labelledby="newPartModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="newPartModalLabel"><i class="fa fa-plus"></i> Thêm Linh Kiện Mới</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addPartForm">
+                    <div class="mb-3">
+                        <label for="partName" class="form-label">Tên linh kiện <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="partName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="partCode" class="form-label">Mã linh kiện (Để trống để tự động tạo)</label>
+                        <input type="text" class="form-control" id="partCode">
+                    </div>
+                    <div class="mb-3">
+                        <label for="partGroup" class="form-label">Nhóm linh kiện</label>
+                        <select class="form-select" id="partGroup" required>
+                            <option value="Ắc quy">Ắc quy</option>
+                            <option value="Động cơ">Động cơ</option>
+                            <option value="Phanh - thắng">Phanh - thắng</option>
+                            <option value="Khung sườn">Khung sườn</option>
+                            <option value="Khác">Khác</option>
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="sellPrice" class="form-label">Giá bán (₫)</label>
+                            <input type="number" class="form-control" id="sellPrice" value="0">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="costPrice" class="form-label">Giá vốn (₫)</label>
+                            <input type="number" class="form-control" id="costPrice" value="0">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="initialStock" class="form-label">Tồn kho ban đầu</label>
+                        <input type="number" class="form-control" id="initialStock" value="0">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-xanhbo" onclick="handleNewPartSubmit()">Lưu Linh Kiện</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editPartModal" tabindex="-1" aria-labelledby="editPartModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="editPartModalLabel"><i class="fa-solid fa-pen-to-square"></i> Chỉnh sửa Linh kiện</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <form id="formEditPart">
+                    <input type="hidden" id="editMaHang"> 
+
+                    <label class="form-label mt-2">Tên linh kiện</label>
+                    <input class="form-control" id="editTenHang">
+
+                    <label class="form-label mt-2">Nhóm linh kiện</label>
+                    <select class="form-select" id="editLoaiHang">
+                        <option value="Ắc quy">Ắc quy</option>
+                        <option value="Động cơ">Động cơ</option>
+                        <option value="Phanh - thắng">Phanh - thắng</option>
+                        <option value="Khung sườn">Khung sườn</option>
+                        <option value="Khác">Khác</option>
+                    </select>
+
+                    <label class="form-label mt-2">Giá bán (₫)</label>
+                    <input class="form-control" id="editGiaBan" type="number">
+
+                    <label class="form-label mt-2">Giá vốn (₫)</label>
+                    <input class="form-control" id="editGiaVon" type="number">
+
+                    <label class="form-label mt-2">Tồn kho</label>
+                    <input class="form-control" id="editTonKho" type="number">
+                </form>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button class="btn btn-xanhbo" onclick="submitEditPart()">Lưu thay đổi</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // ===========================================
+    // 1. ĐỊNH NGHĨA HẰNG SỐ CHỈ SỐ CỘT (0-indexed)
+    // ===========================================
+    var table; // Biến table cần là global
+    const CODE_COL = 0;
+    const GROUP_COL = 2;
+    const SELL_PRICE_COL = 3;
+    const COST_PRICE_COL = 4;
+    const STOCK_COL = 5;
+    const CREATED_DATE_COL = 7;
+    const ACTION_COL = 9;
+
+    // ===========================================
+    // 2. HÀM PHỤ TRỢ (Currency, Filter Logic, Date)
+    // ===========================================
+    function formatCurrency(number) {
+        const num = parseInt(number) || 0;
+        return new Intl.NumberFormat('vi-VN', {style:'currency', currency:'VND', minimumFractionDigits:0}).format(num).replace('₫', 'đ'); 
+    }
+
+    function formatDate(data) {
+        if (!data) return '';
+        const date = new Date(data);
+        // Kiểm tra tính hợp lệ của ngày tháng
+        if (isNaN(date.getTime())) return data; 
+        // Định dạng: dd/mm/yyyy hh:mm
+        return date.toLocaleDateString('vi-VN') + ' ' + date.toLocaleTimeString('vi-VN').substring(0,5); 
+    }
+
+    function applyGroupFilter(groupValue) {
+        // Áp dụng filter bằng regex để lọc chính xác giá trị
+        table.column(GROUP_COL).search(groupValue ? '^'+groupValue+'$' : '', true, false).draw();
+    }
+
+    function triggerCustomFilters() { 
+        table.draw(); 
+    }
+    
+    function openEditModal(maHang){
+    $.ajax({
+        url: '/HangHoa/GetById?ma=' + maHang, // API lấy dữ liệu chi tiết linh kiện
+        type: 'GET',
+        success: function(res){
+            // Điền dữ liệu vào Modal
+            $('#editMaHang').val(res.maHang);
+            $('#editTenHang').val(res.tenHang);
+            $('#editLoaiHang').val(res.loaiHang);
+            $('#editGiaBan').val(res.giaBan);
+            $('#editGiaVon').val(res.giaVon);
+            $('#editTonKho').val(res.tonKho);
+            
+            // Hiển thị modal chỉnh sửa
+            $('#editPartModal').modal('show');
+        },
+        error: function(xhr) { 
+            console.error("Lỗi AJAX GetById:", xhr.responseText);
+            alert('Lỗi Server khi tải dữ liệu linh kiện.'); 
+        }
+    });
+}
+function submitEditPart(){
+    var data = {
+        MaHang: $('#editMaHang').val(),
+        TenHang: $('#editTenHang').val(),
+        LoaiHang: $('#editLoaiHang').val(),
+        GiaBan: parseInt($('#editGiaBan').val()) || 0,
+        GiaVon: parseInt($('#editGiaVon').val()) || 0,
+        TonKho: parseInt($('#editTonKho').val()) || 0
+    };
+    
+    if(!data.TenHang){ alert('Vui lòng nhập Tên linh kiện.'); return; }
+
+    $.ajax({
+        url:'/HangHoa/EditAjax', // Dùng chung API chỉnh sửa với Hàng hóa
+        type:'POST',
+        contentType:'application/json',
+        data:JSON.stringify(data),
+        success:function(res){
+            if(res.success){
+                $('#editPartModal').modal('hide');
+                // Tải lại DataTables để hiển thị thay đổi
+                table.ajax.reload(null, false); 
+                alert("Cập nhật linh kiện thành công!");
+            } else alert("Cập nhật thất bại!");
+        },
+        error: function(xhr) { 
+            console.error("Lỗi AJAX EditAjax:", xhr.responseText);
+            alert('Lỗi Server khi cập nhật linh kiện.'); 
+        }
+    });
+}
+
+    function deleteProduct(maHang) {
+    if (!confirm(`Bạn có chắc chắn muốn xóa linh kiện có Mã: ${maHang}? Thao tác này không thể hoàn tác.`)) {
+        return; 
+    }
+    
+    $.ajax({
+        url: '/HangHoa/DeleteAjax', // Dùng chung API xóa với Hàng hóa
+        type: 'POST', 
+        contentType: 'application/json',
+        data: JSON.stringify({ MaHang: maHang }), // Truyền Mã hàng (linh kiện) để xóa
+        success: function(res) {
+            if (res.success) {
+                alert(`Đã xóa linh kiện [${maHang}] thành công khỏi hệ thống!`);
+                
+                // 2. Tải lại DataTables để xóa linh kiện khỏi giao diện
+                table.ajax.reload(null, false); 
+            } else {
+                alert("Xóa linh kiện thất bại! Lỗi: " + (res.message || 'Không rõ.'));
+            }
+        },
+        error: function(xhr) {
+            console.error("Lỗi AJAX khi xóa:", xhr.responseText);
+            alert('Có lỗi Server khi thực hiện xóa linh kiện.');
+        }
+    });
+}
+    function handleNewPartSubmit() {
+        const name = $('#partName').val().trim();
+        if (!name) { alert("Vui lòng nhập Tên linh kiện."); return; }
+
+        // Lấy dữ liệu form
+        const data = {
+            MaHang: $('#partCode').val().trim(),
+            TenHang: name,
+            LoaiHang: $('#partGroup').val(),
+            GiaBan: parseInt($('#sellPrice').val()) || 0,
+            GiaVon: parseInt($('#costPrice').val()) || 0,
+            TonKho: parseInt($('#initialStock').val()) || 0,
+            KhachDat: 0, 
+            DatNCC: 0 
+        };
+        
+        // Gửi dữ liệu lên Server
+        $.ajax({
+            url: "/HangHoa/Create", 
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify(data),
+            success: function(res) {
+                if (res.success) {
+                    alert(`Đã thêm linh kiện "${data.TenHang}" thành công! Mã: ${res.maHang}`);
+                    
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('newPartModal'));
+                    modal.hide();
+                    $('#addPartForm')[0].reset();
+                    
+                    table.ajax.reload(null, false); 
+                } else {
+                    alert('Thêm linh kiện thất bại. Lỗi: ' + (res.message || 'Lỗi không xác định.'));
+                }
+            },
+            error: function(xhr) {
+                console.error("Lỗi AJAX:", xhr.responseText);
+                alert('Lỗi kết nối Server khi thêm linh kiện.');
+            }
+        });
+    }
+
+    // ===========================================
+    // 4. KHỞI TẠO DATATABLES
+    // ===========================================
+    $(document).ready(function() {
+        table = $('#partsTable').DataTable({
+            // 🛠️ Cấu hình AJAX để tải dữ liệu
+            ajax:{
+                url: "/HangHoa/GetAllLinhKien", // Gọi Action trong Controller
+                dataSrc: ""
+            },
+            // 🛠️ Định nghĩa các cột
+            columns:[
+                { data:"maHang", className:"text-center" },     
+                { data:"tenHang", className:"text-start" },    
+                { data:"loaiHang", className:"text-center" },   
+                { data:"giaBan", className:"text-end" },        
+                { data:"giaVon", className:"text-end" },        
+                { data:"tonKho", className:"text-center" },     
+                { data:"khachDat", className:"text-center" },   
+                { data:"thoiGianTao", className:"text-center" }, 
+                { data:"datNCC", className:"text-center" },     
+                // Cột Thao tác
+                { data:"maHang", orderable:false, searchable:false, className:"text-center" }
+            ],
+            
+            // Cấu hình DOM, Order, Language
+            dom:'rtip',
+            order:[[STOCK_COL,'desc']],
+            language: {
+                sProcessing: "Đang xử lý...",
+                sLengthMenu: "Xem _MENU_ mục",
+                sZeroRecords: "Không tìm thấy linh kiện nào phù hợp",
+                sInfo: "Hiển thị _START_ đến _END_ trong tổng số _TOTAL_ mục",
+                sInfoEmpty: "Hiển thị 0 đến 0 trong tổng số 0 mục",
+                sInfoFiltered: "(được lọc từ tổng số _MAX_ mục)",
+                sSearch: "Tìm kiếm:",
+                oPaginate: { sFirst:"Đầu", sLast:"Cuối", sNext:"Tiếp", sPrevious:"Trước" }
+            },
+            columnDefs: [
+                // Định dạng tiền tệ
+                { targets:[SELL_PRICE_COL, COST_PRICE_COL], render:function(data,type){ const num=parseInt(data)||0; return (type==='display'||type==='filter')?formatCurrency(num):num; }, className:'text-end' },
+                
+                // Định dạng Nhóm linh kiện (Dùng badge xanh lá đậm đồng bộ)
+                { 
+                    targets:GROUP_COL, 
+                    render:function(data,type){ 
+                        if(type==='display') return `<span class="badge badge-linhkien-group">${data}</span>`; 
+                        return data; 
+                    }, 
+                    className:'text-center' 
+                },
+                // Định dạng Tên hàng (Chỉ để cho chắc chắn)
+                { targets:1, className:'text-start' },
+                
+                // Định dạng Thời gian tạo
+                { 
+                    targets:CREATED_DATE_COL,
+                    render: function(data, type) {
+                        return (type === 'display') ? formatDate(data) : data;
+                    }
+                },
+                
+                // Cột Thao tác (Đồng bộ với trang Hàng hóa)
+                { 
+                    targets:ACTION_COL, 
+                    orderable:false, 
+                    searchable:false, 
+                    render: function(d){
+                        return `
+                            <div class="d-flex justify-content-center gap-2">
+                                <a href="javascript:void(0)" onclick="openEditModal('${d}')" class="btn btn-sm btn-xanhbo" title="Chỉnh sửa"><i class="fa-solid fa-pen-to-square"></i></a>
+                                <a href="javascript:void(0)" onclick="deleteProduct('${d}')" class="btn btn-sm btn-danger" title="Xóa linh kiện"><i class="fa-solid fa-trash"></i></a>
+                            </div>
+                        `;
+                    }
+                }
+            ]
+        });
+
+        // Custom Filter tồn kho
+        $.fn.dataTable.ext.search.push(function(settings,data){
+            if(settings.nTable.id!=='partsTable') return true;
+            const stockFilter = $('#quickFilterStock').val() || $('#filterStock').val();
+            const stock = parseInt(data[STOCK_COL])||0;
+            if(stockFilter==='available' && stock<=0) return false;
+            if(stockFilter==='outOfStock' && stock>0) return false;
+            return true;
+        });
+
+        // Sidebar Filter đồng bộ với Quick Filter
+        $('#filterGroup').on('change', function(){ const val=$(this).val(); $('#quickFilterGroup').val(val); applyGroupFilter(val); });
+        $('#filterStock').on('change', function(){ const val=$(this).val(); $('#quickFilterStock').val(val); triggerCustomFilters(); });
+
+        // Quick Filter đồng bộ với Sidebar Filter
+        $('#quickFilterGroup').on('change', function(){ const val=$(this).val(); $('#filterGroup').val(val); applyGroupFilter(val); });
+        $('#quickFilterStock').on('change', function(){ const val=$(this).val(); $('#filterStock').val(val); triggerCustomFilters(); });
+
+        // Global search
+        $('#globalSearchBox').on('keyup', function(){ table.search(this.value).draw(); });
+    });
+</script>

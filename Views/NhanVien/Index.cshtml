@@ -1,0 +1,164 @@
+@{
+    ViewData["Title"] = "Trang chủ Nhân viên";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    // MÀU SẮC ĐỒNG NHẤT (Xanh lá cây)
+    var uniformColor = "#28a745"; 
+}
+
+<style>
+    /* 1. Thiết lập hiệu ứng hover đồng nhất cho tất cả cards */
+    .custom-card-hover {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        cursor: pointer;
+    }
+
+    .custom-card-hover:hover {
+        transform: translateY(-5px); 
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    /* 2. Đảm bảo các card có chiều cao đồng đều (220px) */
+    .action-card-min-height {
+        min-height: 220px; 
+    }
+
+    /* 3. FIX CỐ ĐỊNH FOOTER: Buộc thẻ <a> chiếm toàn bộ chiều cao thẻ cha (card) */
+    .card-link-fill {
+        height: 100% !important;
+    }
+    
+    /* Định nghĩa màu sắc đồng nhất (xanh lá) */
+    .uniform-color {
+        color: @uniformColor !important;
+    }
+
+    .card-outline.card-uniform {
+        border-top: 3px solid @uniformColor;
+    }
+    
+    .bg-uniform {
+        background-color: @uniformColor !important;
+        color: white; 
+    }
+    
+    /* Đặt màu chữ cho footer */
+    .bg-uniform .card-footer {
+        color: white !important;
+    }
+    
+    /* Styling cho phần hoạt động gần đây */
+    .recent-activity-list .list-group-item {
+        border-left: 3px solid transparent;
+        transition: border-left 0.2s ease;
+    }
+    .recent-activity-list .list-group-item:hover {
+        border-left: 3px solid @uniformColor;
+        background-color: #f8f9fa;
+    }
+</style>
+
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-12">
+                <h1 class="m-0 text-dark font-weight-bold">
+                    <i class="fas fa-home mr-2 uniform-color"></i> TỔNG QUAN NGHIỆP VỤ KHO
+                </h1>
+                <p class="text-muted">Các hành động chính của nhân viên kho.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+
+        <!-- HÀNG 1: 4 TÁC VỤ CHÍNH TRÊN MỘT HÀNG NGANG (col-lg-3) -->
+        <div class="row">
+
+            <!-- CARD 1: Nhập kho -->
+            <div class="col-lg-3 col-md-6 col-sm-12 mb-3">
+                <div class="card card-outline card-uniform shadow action-card-min-height custom-card-hover d-flex flex-column">
+                    <a href="@Url.Action("index","NhapHang")" class="text-decoration-none d-flex flex-column card-link-fill">
+                        <div class="card-body d-flex align-items-center p-3 flex-grow-1">
+                            <div class="mr-3">
+                                <i class="fas fa-file-import uniform-color" style="font-size: 3rem;"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-weight-bold uniform-color mb-0">NHẬP KHO</h4>
+                                <p class="text-muted mb-0">Tạo, phê duyệt và theo dõi các phiếu nhập hàng.</p>
+                            </div>
+                        </div>
+                        <div class="card-footer text-center bg-uniform" style="padding: 10px 0;">
+                            <span class="text-white font-weight-bold">Đi tới <i class="fas fa-arrow-circle-right ml-2"></i></span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- CARD 2: Xuất kho -->
+            <div class="col-lg-3 col-md-6 col-sm-12 mb-3">
+                <div class="card card-outline card-uniform shadow action-card-min-height custom-card-hover d-flex flex-column">
+                    <a href="@Url.Action("index","XuatHang")" class="text-decoration-none d-flex flex-column card-link-fill">
+                        <div class="card-body d-flex align-items-center p-3 flex-grow-1">
+                            <div class="mr-3">
+                                <i class="fas fa-file-export uniform-color" style="font-size: 3rem;"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-weight-bold uniform-color mb-0">XUẤT KHO</h4>
+                                <p class="text-muted mb-0">Tạo, phê duyệt và theo dõi các phiếu xuất hàng.</p>
+                            </div>
+                        </div>
+                        <div class="card-footer text-center bg-uniform" style="padding: 10px 0;">
+                            <span class="text-white font-weight-bold">Đi tới <i class="fas fa-arrow-circle-right ml-2"></i></span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- CARD 3: Chuyển kho -->
+            <div class="col-lg-3 col-md-6 col-sm-12 mb-3">
+                <div class="card card-outline card-uniform shadow action-card-min-height custom-card-hover d-flex flex-column">
+                    <a href="@Url.Action("Index","KhoHang")" class="text-decoration-none d-flex flex-column card-link-fill">
+                        <div class="card-body d-flex align-items-center p-3 flex-grow-1">
+                            <div class="mr-3">
+                                <i class="fas fa-dolly uniform-color" style="font-size: 3rem;"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-weight-bold uniform-color mb-0">CHUYỂN KHO</h4>
+                                <p class="text-muted mb-0">Thực hiện luân chuyển hàng hóa giữa các kho.</p>
+                            </div>
+                        </div>
+                        <div class="card-footer text-center bg-uniform" style="padding: 10px 0;">
+                            <span class="text-white font-weight-bold">Đi tới <i class="fas fa-arrow-circle-right ml-2"></i></span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- CARD 4: Kiểm kho -->
+            <div class="col-lg-3 col-md-6 col-sm-12 mb-3">
+                <div class="card card-outline card-uniform shadow action-card-min-height custom-card-hover d-flex flex-column">
+                    <a href="@Url.Action("Index","KiemKho")" class="text-decoration-none d-flex flex-column card-link-fill">
+                        <div class="card-body d-flex align-items-center p-3 flex-grow-1">
+                            <div class="mr-3">
+                                <i class="fas fa-clipboard-check uniform-color" style="font-size: 3rem;"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-weight-bold uniform-color mb-0">KIỂM KHO</h4>
+                                <p class="text-muted mb-0">Lên lịch và thực hiện các đợt kiểm kê hàng hóa.</p>
+                            </div>
+                        </div>
+                        <div class="card-footer text-center bg-uniform" style="padding: 10px 0;">
+                            <span class="text-white font-weight-bold">Đi tới <i class="fas fa-arrow-circle-right ml-2"></i></span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+}

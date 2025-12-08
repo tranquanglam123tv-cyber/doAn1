@@ -1,0 +1,322 @@
+@using Microsoft.AspNetCore.Mvc.Rendering
+@using Microsoft.AspNetCore.Http
+@{
+    ViewBag.Title = "Đăng nhập hệ thống";
+    Layout = null;
+    var currentRole = ViewBag.DesiredRole as string ?? "Manager";
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewBag.Title</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-color: #428446; /* Xanh lá cây đậm */
+            --primary-hover: #3b743e;
+            --bg-color: #f0fdf4; /* Nền rất nhạt */
+            --text-color-light: #f8f9fa;
+        }
+        
+        body {
+            background: var(--bg-color);
+            background: linear-gradient(135deg, var(--bg-color) 0%, #e8f9e8 100%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: "Segoe UI", sans-serif;
+            transition: background 0.5s ease;
+        }
+        
+        .login-container {
+            max-width: 420px;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25); /* Shadow sâu hơn */
+            background-color: #fff;
+            animation: fadeIn 0.5s ease-out;
+            border: 1px solid #e0e0e0; /* Thêm viền nhẹ */
+        }
+
+        .login-header {
+            color: var(--primary-color);
+            border-bottom: 3px solid var(--primary-color); 
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+        }
+
+        /* --- TỐI ƯU HÓA: INPUT GROUP --- */
+        
+        /* Input Group Text */
+        .input-group-text {
+            background-color: var(--primary-color);
+            color: white;
+            border: 1px solid var(--primary-color);
+            border-radius: 8px 0 0 8px; 
+            min-width: 45px; 
+            justify-content: center;
+            padding: 0.375rem 0.75rem; /* Căn giữa nội dung */
+        }
+
+        /* Form Control Styling */
+        .form-control {
+            border-radius: 0 8px 8px 0;
+            font-size: 1rem;
+            padding: 0.75rem 1rem; /* Tăng padding */
+            border-left: none; /* Loại bỏ viền thừa giữa input-group-text và input */
+            border-color: #ced4da;
+        }
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(66, 132, 70, 0.35); 
+        }
+        
+        /* Form Control Invalid State */
+        .form-control.is-invalid {
+            border-color: #dc3545;
+            padding-right: calc(1.5em + 0.75rem);
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right calc(0.375em + 0.1875rem) center;
+            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+        }
+
+        /* Badge Active Color */
+        .badge-active {
+            background-color: var(--primary-color) !important;
+            color: white !important;
+            font-weight: 600;
+            border: 1px solid var(--primary-color);
+            border-radius: 6px;
+        }
+
+        /* Badge Inactive Color */
+        .badge-inactive {
+            background-color: #f1f1f1 !important; /* Màu xám nhạt hơn */
+            color: #6c757d !important;
+            border: 1px solid #dee2e6;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+        .badge-inactive:hover {
+            background-color: #e9e9e9 !important;
+        }
+        
+        /* --- TỐI ƯU HÓA: BUTTONS --- */
+
+        /* Primary Button Styling */
+        .btn-login {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: bold;
+            border-radius: 10px; /* Góc tròn hơn */
+            transition: all 0.3s ease;
+            padding: 12px 0;
+            border: none;
+            box-shadow: 0 4px 10px rgba(66, 132, 70, 0.4);
+            letter-spacing: 0.5px;
+        }
+        .btn-login:hover {
+            background-color: var(--primary-hover);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(66, 132, 70, 0.5);
+        }
+        
+        /* Secondary Button (Role Switch) */
+        .btn-staff-login {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            padding: 8px 15px;
+        }
+        .btn-staff-login:hover {
+            background-color: var(--primary-color);
+            color: white;
+            transform: translateY(-1px);
+        }
+        
+        /* Toggle Password Icon */
+        .password-wrapper {
+            /* Giữ nguyên cấu trúc để hỗ trợ icon mắt */
+            position: relative;
+        }
+        .password-wrapper .input-group {
+            /* Input group bao quanh input và input-group-text */
+            display: flex;
+        }
+        .password-wrapper i {
+            /* Vị trí tuyệt đối đặt trong password-wrapper */
+            position: absolute; 
+            right: 15px; 
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #6c757d;
+            z-index: 5;
+            transition: color 0.2s;
+        }
+        .password-wrapper i:hover {
+            color: var(--primary-color);
+        }
+        
+        .text-danger {
+            color: #dc3545 !important;
+            font-size: 0.875em;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-container">
+        <div class="text-center login-header">
+            <i class="fa-solid fa-box-open fa-3x mb-2" aria-hidden="true"></i>
+            <h4 class="fw-bold m-0">ĐĂNG NHẬP HỆ THỐNG</h4>
+            
+            <div class="mt-2">
+                <span class="badge @(currentRole == "Manager" ? "badge-active" : "badge-inactive") p-2 me-1">
+                    <i class="fas fa-user-shield me-1"></i> QUẢN LÝ
+                </span>
+                <span class="badge @(currentRole == "Employee" ? "badge-active" : "badge-inactive") p-2">
+                    <i class="fas fa-user-tie me-1"></i> NHÂN VIÊN
+                </span>
+            </div>
+        </div>
+        
+        @if (ViewBag.Error != null)
+        {
+            <div class="alert alert-danger py-2 text-center mb-3" role="alert">
+                <i class="fas fa-exclamation-circle me-1"></i> @ViewBag.Error
+            </div>
+        }
+
+        <form id="loginForm" method="post" action="/Account/Login">
+            
+            <input type="hidden" name="desiredRole" value="@currentRole" />
+            
+            <div class="mb-3">
+                <label for="username" class="form-label fw-semibold">Tên đăng nhập</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fa-solid fa-user"></i></span>
+                    <input type="text" class="form-control" id="username" name="Username" placeholder="Nhập tên đăng nhập">
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <label for="password" class="form-label fw-semibold">Mật khẩu</label>
+                <div class="password-wrapper"> 
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
+                        <input type="password" class="form-control" id="password" name="Password" placeholder="Nhập mật khẩu">
+                    </div>
+                    <i class="fa-solid fa-eye" id="togglePassword"></i>
+                </div>
+            </div>
+            
+            <div class="d-grid gap-2 mt-4">
+                <button type="submit" class="btn btn-login">
+                    Đăng nhập @(currentRole == "Manager" ? "Quản lý" : "Nhân viên")
+                </button>
+            </div>
+        </form>
+
+        <div class="text-center mt-4">
+            @if (currentRole == "Manager")
+            {
+                <a href="/Account/Login?role=Employee" class="btn btn-staff-login btn-sm border w-100">
+                    <i class="fas fa-arrow-right me-1"></i> Chuyển sang Đăng nhập Nhân viên
+                </a>
+            }
+            else
+            {
+                <a href="/Account/Login?role=Manager" class="btn btn-staff-login btn-sm border w-100">
+                    <i class="fas fa-arrow-left me-1"></i> Quay lại Đăng nhập Quản lý
+                </a>
+            }
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>  
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const loginForm = document.getElementById('loginForm');
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            const togglePassword = document.getElementById('togglePassword');
+
+            // Hàm hiển thị lỗi validation
+            function displayError(inputElement, message) {
+                inputElement.classList.add('is-invalid');
+                const parentDiv = inputElement.closest('.mb-3, .mb-4');
+                let errorSpan = parentDiv.querySelector('.validation-message');
+                if (!errorSpan) {
+                    errorSpan = document.createElement('span');
+                    errorSpan.classList.add('text-danger', 'validation-message', 'd-block', 'mt-1');
+                    parentDiv.appendChild(errorSpan);
+                }
+                errorSpan.textContent = message;
+            }
+
+            // Hàm xóa lỗi (Tối ưu: chỉ xóa lỗi input đang gõ)
+            function clearErrors(e) {
+                // Xóa lỗi trên input đang được tương tác
+                if (e && (e.target === usernameInput || e.target === passwordInput)) {
+                    e.target.classList.remove('is-invalid');
+                    const parentDiv = e.target.closest('.mb-3, .mb-4');
+                    let errorSpan = parentDiv.querySelector('.validation-message');
+                    if (errorSpan) {
+                        errorSpan.textContent = '';
+                    }
+                }
+                
+                // Xóa thông báo lỗi server (ViewBag.Error)
+                document.querySelector('.alert-danger')?.remove();
+            }
+            
+            if (togglePassword && passwordInput) {
+                togglePassword.addEventListener('click', function () {
+                    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                    passwordInput.setAttribute('type', type);
+                    this.classList.toggle('fa-eye');
+                    this.classList.toggle('fa-eye-slash');
+                });
+            }
+
+            if (loginForm) {
+                loginForm.addEventListener('submit', function (e) {
+                    let isValid = true;
+                    // Xóa tất cả lỗi cũ (cho trường hợp submit thất bại lần 2)
+                    document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+                    document.querySelectorAll('.validation-message').forEach(el => el.textContent = '');
+
+                    if (usernameInput.value.trim() === '') {
+                        displayError(usernameInput, 'Tên đăng nhập không được để trống.');
+                        isValid = false;
+                    }
+                    if (passwordInput.value === '') {
+                        displayError(passwordInput, 'Mật khẩu không được để trống.');
+                        isValid = false;
+                    }
+                    if (!isValid) {
+                        e.preventDefault();
+                    }
+                });
+            }
+            
+            // Gắn sự kiện xóa lỗi ngay khi người dùng nhập
+            usernameInput.addEventListener('input', clearErrors);
+            passwordInput.addEventListener('input', clearErrors);
+        });
+    </script>
+</body>
+</html>

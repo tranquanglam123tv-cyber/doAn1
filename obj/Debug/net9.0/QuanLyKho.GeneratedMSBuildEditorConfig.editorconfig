@@ -1,0 +1,161 @@
+is_global = true
+build_property.TargetFramework = net9.0
+build_property.TargetFramework = net9.0
+build_property.TargetPlatformMinVersion = 
+build_property.TargetPlatformMinVersion = 
+build_property.UsingMicrosoftNETSdkWeb = true
+build_property.UsingMicrosoftNETSdkWeb = true
+build_property.ProjectTypeGuids = 
+build_property.ProjectTypeGuids = 
+build_property.InvariantGlobalization = 
+build_property.InvariantGlobalization = 
+build_property.PlatformNeutralAssembly = 
+build_property.PlatformNeutralAssembly = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property._SupportedPlatformList = Linux,macOS,Windows
+build_property._SupportedPlatformList = Linux,macOS,Windows
+build_property.RootNamespace = QuanLyKho
+build_property.RootNamespace = QuanLyKho
+build_property.ProjectDir = C:\Users\ADMIN'\OneDrive\Nam3HK1\DoAn1\QuanLyKho-main\
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.RazorLangVersion = 9.0
+build_property.SupportLocalizedComponentNames = 
+build_property.GenerateRazorMetadataSourceChecksumAttributes = 
+build_property.MSBuildProjectDirectory = C:\Users\ADMIN'\OneDrive\Nam3HK1\DoAn1\QuanLyKho-main
+build_property._RazorSourceGeneratorDebug = 
+build_property.EffectiveAnalysisLevelStyle = 9.0
+build_property.EnableCodeStyleSeverity = 
+
+[C:/Users/ADMIN'/OneDrive/Nam3HK1/DoAn1/QuanLyKho-main/Views/Account/Login.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFxMb2dpbi5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ADMIN'/OneDrive/Nam3HK1/DoAn1/QuanLyKho-main/Views/BaoCao/BCNhap.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQmFvQ2FvXEJDTmhhcC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ADMIN'/OneDrive/Nam3HK1/DoAn1/QuanLyKho-main/Views/BaoCao/BCXuat.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQmFvQ2FvXEJDWHVhdC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ADMIN'/OneDrive/Nam3HK1/DoAn1/QuanLyKho-main/Views/BaoCao/DanhSachBC.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQmFvQ2FvXERhbmhTYWNoQkMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ADMIN'/OneDrive/Nam3HK1/DoAn1/QuanLyKho-main/Views/GiaoDich/DatHangNhap.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcR2lhb0RpY2hcRGF0SGFuZ05oYXAuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ADMIN'/OneDrive/Nam3HK1/DoAn1/QuanLyKho-main/Views/GiaoDich/TraCuu.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcR2lhb0RpY2hcVHJhQ3V1LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ADMIN'/OneDrive/Nam3HK1/DoAn1/QuanLyKho-main/Views/HangHoa/DanhSach.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSGFuZ0hvYVxEYW5oU2FjaC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ADMIN'/OneDrive/Nam3HK1/DoAn1/QuanLyKho-main/Views/HangHoa/QuanLyLinhKien.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSGFuZ0hvYVxRdWFuTHlMaW5oS2llbi5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ADMIN'/OneDrive/Nam3HK1/DoAn1/QuanLyKho-main/Views/HangHoa/QuanLyXe.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSGFuZ0hvYVxRdWFuTHlYZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ADMIN'/OneDrive/Nam3HK1/DoAn1/QuanLyKho-main/Views/Home/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ADMIN'/OneDrive/Nam3HK1/DoAn1/QuanLyKho-main/Views/Home/Privacy.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxQcml2YWN5LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ADMIN'/OneDrive/Nam3HK1/DoAn1/QuanLyKho-main/Views/KhoHang/ChonKhoDeChuyen.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcS2hvSGFuZ1xDaG9uS2hvRGVDaHV5ZW4uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ADMIN'/OneDrive/Nam3HK1/DoAn1/QuanLyKho-main/Views/KhoHang/ChuyenKho.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcS2hvSGFuZ1xDaHV5ZW5LaG8uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ADMIN'/OneDrive/Nam3HK1/DoAn1/QuanLyKho-main/Views/KhoHang/ThongKeSaiLech.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcS2hvSGFuZ1xUaG9uZ0tlU2FpTGVjaC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ADMIN'/OneDrive/Nam3HK1/DoAn1/QuanLyKho-main/Views/KiemKho/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcS2llbUtob1xDcmVhdGUuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ADMIN'/OneDrive/Nam3HK1/DoAn1/QuanLyKho-main/Views/KiemKho/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcS2llbUtob1xJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ADMIN'/OneDrive/Nam3HK1/DoAn1/QuanLyKho-main/Views/NCC/DanhSachNCC.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTkNDXERhbmhTYWNoTkNDLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ADMIN'/OneDrive/Nam3HK1/DoAn1/QuanLyKho-main/Views/NCC/Nhap.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTkNDXE5oYXAuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ADMIN'/OneDrive/Nam3HK1/DoAn1/QuanLyKho-main/Views/NCC/Xuat.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTkNDXFh1YXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ADMIN'/OneDrive/Nam3HK1/DoAn1/QuanLyKho-main/Views/NhanVien/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTmhhblZpZW5cSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ADMIN'/OneDrive/Nam3HK1/DoAn1/QuanLyKho-main/Views/NhanVien/NhanVien.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTmhhblZpZW5cTmhhblZpZW4uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ADMIN'/OneDrive/Nam3HK1/DoAn1/QuanLyKho-main/Views/NhapHang/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTmhhcEhhbmdcQ3JlYXRlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ADMIN'/OneDrive/Nam3HK1/DoAn1/QuanLyKho-main/Views/NhapHang/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTmhhcEhhbmdcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ADMIN'/OneDrive/Nam3HK1/DoAn1/QuanLyKho-main/Views/Shared/Error.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXEVycm9yLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ADMIN'/OneDrive/Nam3HK1/DoAn1/QuanLyKho-main/Views/Shared/_LayoutNV.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9MYXlvdXROVi5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ADMIN'/OneDrive/Nam3HK1/DoAn1/QuanLyKho-main/Views/Shared/_ValidationScriptsPartial.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9WYWxpZGF0aW9uU2NyaXB0c1BhcnRpYWwuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ADMIN'/OneDrive/Nam3HK1/DoAn1/QuanLyKho-main/Views/TaoBaoCao/BaoCaoNhap.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVGFvQmFvQ2FvXEJhb0Nhb05oYXAuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ADMIN'/OneDrive/Nam3HK1/DoAn1/QuanLyKho-main/Views/TaoBaoCao/BaoCaoXuat.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVGFvQmFvQ2FvXEJhb0Nhb1h1YXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ADMIN'/OneDrive/Nam3HK1/DoAn1/QuanLyKho-main/Views/XuatHang/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcWHVhdEhhbmdcQ3JlYXRlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ADMIN'/OneDrive/Nam3HK1/DoAn1/QuanLyKho-main/Views/XuatHang/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcWHVhdEhhbmdcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ADMIN'/OneDrive/Nam3HK1/DoAn1/QuanLyKho-main/Views/_ViewImports.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcX1ZpZXdJbXBvcnRzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ADMIN'/OneDrive/Nam3HK1/DoAn1/QuanLyKho-main/Views/_ViewStart.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcX1ZpZXdTdGFydC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ADMIN'/OneDrive/Nam3HK1/DoAn1/QuanLyKho-main/Views/Shared/_Layout.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9MYXlvdXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = b-uqf5unawn5

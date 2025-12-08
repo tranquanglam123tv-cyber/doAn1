@@ -1,0 +1,613 @@
+@model List<QuanLyKho.Models.NCC>
+@{
+    ViewData["Title"] = "Danh sách Nhà Cung Cấp";
+}
+
+
+@* Cập nhật: Sử dụng Bootstrap 5 và CSS từ tệp Hàng Hóa *@
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+
+
+<style>
+    /* CSS TỪ TỆP HÀNG HÓA */
+    :root {
+        --primary-green-dark: #28a745; 
+        --table-header-bg: white; 
+        --table-header-color: #4a4a4a; 
+        --background-color: #f7fcf7; /* Màu nền nhẹ nhàng */
+        --shadow-color: rgba(0, 0, 0, 0.08);
+        --border-color: #e1e1e1;
+        --action-blue: #007bff;
+        --light-green-border: #cde8c8;
+    }
+
+    body {
+        background-color: var(--background-color);
+        font-family: "Segoe UI", sans-serif;
+    }
+
+    /* Buttons */
+    .btn-xanhbo {
+        background-color: var(--primary-green-dark);
+        color: #fff;
+        border: none;
+        transition: 0.3s;
+        font-weight: 500;
+        border-radius: 6px;
+        padding: 8px 15px;
+        font-size: 14px;
+    }
+    .btn-xanhbo:hover {
+        background-color: #218838; 
+        color: #fff;
+    }
+    .btn-action-blue {
+        background-color: var(--action-blue);
+        color: #fff;
+        border: none;
+        transition: 0.2s;
+        font-weight: 500;
+        border-radius: 6px;
+        padding: 8px 15px;
+        font-size: 14px;
+    }
+    .btn-action-blue:hover {
+        background-color: #0069d9;
+        color: #fff;
+    }
+
+    /* Filter Card (Sidebar bên trái) */
+    .filter-card {
+        background-color: #fff;
+        border-radius: 8px; 
+        box-shadow: 0 1px 6px var(--shadow-color);
+        padding: 18px;
+        border: 1px solid var(--border-color);
+    }
+    .filter-label {
+        font-weight: 600;
+        margin-bottom: 5px;
+        font-size: 14px;
+        color: #555;
+    }
+
+    /* Inputs */
+    .form-control, .form-select {
+        border-radius: 6px;
+        font-size: 14px;
+        border-color: var(--light-green-border);
+    }
+    .form-control:focus, .form-select:focus {
+        box-shadow: 0 0 0 0.15rem rgba(40, 167, 69, 0.25);
+        border-color: var(--primary-green-dark);
+    }
+    .input-range-group {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+    
+    /* Action Bar (Thanh tìm kiếm bên phải) */
+    .action-bar {
+        background-color: #fff;
+        padding: 12px 16px;
+        border-radius: 8px; 
+        box-shadow: 0 1px 6px var(--shadow-color);
+        border: 1px solid var(--border-color);
+    }
+    .search-container {
+        /* Đảm bảo input tìm kiếm trong action bar có style đồng nhất */
+        width: 300px; /* Độ rộng cố định */
+    }
+    .search-container input {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0;
+    }
+
+
+    /* Table */
+    .table-responsive {
+        border-radius: 8px;
+        overflow: hidden; 
+        border: 1px solid var(--border-color);
+    }
+    .table th {
+        background-color: var(--table-header-bg) !important;
+        color: var(--table-header-color);
+        font-weight: 600;
+        font-size: 13px; 
+        border-bottom: 2px solid #ddd !important;
+        border-top: none !important;
+        padding: 10px 8px;
+    }
+    .table td {
+        font-size: 13px;
+        border-top: 1px solid #f0f0f0;
+        vertical-align: middle;
+        padding: 8px;
+    }
+    .table-hover > tbody > tr:hover {
+        background-color: #f5fff5; 
+    }
+    
+    /* Datatables Overrides (Giữ nguyên từ code cũ) */
+    .dataTables_filter, .dataTables_info, .dt-buttons, .dataTables_length { display: none !important; }
+    
+    /* Detail Row */
+    td.details-control i { color: #28a745; font-size: 1.2em; cursor: pointer; } 
+    .detail-info { padding: 10px 20px; background-color: #f9f9f9; border-left: 5px solid var(--primary-green-dark); }
+    .detail-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+    .detail-col { flex-basis: 32%; font-size: 0.9em; }
+
+    /* Modal Styling */
+     #addSupplierModal .modal-header {
+        background-color: var(--primary-green-dark) !important;
+        color: white;
+    }
+    .btn-close-white {
+        filter: invert(1) grayscale(100%) brightness(200%);
+    }
+
+</style>
+
+<div class="container-fluid mt-4">
+    <div class="row g-4">
+        
+        @* CỘT 1: BỘ LỌC VÀ FORM THÊM/SỬA *@
+        <div class="col-lg-3">
+            <div class="filter-card">
+                <h5 class="mb-3 text-success fw-bold"><i class="fa-solid fa-filter"></i> Bộ lọc Nhà cung cấp</h5>
+
+                <label class="filter-label">Tổng mua (VNĐ)</label>
+                <div class="input-range-group">
+                    <input id="totalMin" type="number" class="form-control" placeholder="Từ">
+                    <input id="totalMax" type="number" class="form-control" placeholder="Đến">
+                </div>
+                <div id="totalError" class="text-danger" style="font-size:0.8em;margin-bottom:10px"></div>
+
+                <label class="filter-label">Nợ hiện tại (VNĐ)</label>
+                <div class="input-range-group">
+                    <input id="debtMin" type="number" class="form-control" placeholder="Từ">
+                    <input id="debtMax" type="number" class="form-control" placeholder="Đến">
+                </div>
+                <div id="debtError" class="text-danger" style="font-size:0.8em;margin-bottom:10px"></div>
+                
+                @* KHỐI FORM THÊM/SỬA NCC - ĐƯỢC ẨN BAN ĐẦU *@
+                <div id="addSupplierForm" style="display:none; padding-top: 15px; border-top: 1px solid #eee;">
+                    <h5 id="formTitle" class="text-success fw-bold mb-3">Thêm Nhà cung cấp mới</h5>
+                    
+                    <label class="filter-label">Mã NCC <span class="text-danger">*</span></label>
+                    <input type="text" id="MaNCC" class="form-control mb-2" placeholder="Mã NCC (Bắt buộc)">
+         
+                    <label class="filter-label">Tên NCC <span class="text-danger">*</span></label>
+                    <input type="text" id="TenNCC" class="form-control mb-2" placeholder="Tên NCC (Bắt buộc)">
+                    
+                    <label class="filter-label">Điện thoại</label>
+                    <input type="text" id="DienThoai" class="form-control mb-2" placeholder="Điện thoại">
+                    
+                    <label class="filter-label">Nợ hiện tại (₫)</label>
+                    <input type="number" id="NoHienTai" class="form-control mb-2" placeholder="Nợ hiện tại (0)">
+                    
+                    <label class="filter-label">Tổng mua (₫)</label>
+                    <input type="number" id="TongMua" class="form-control mb-4" placeholder="Tổng mua (0)">
+           
+                    <button id="saveSupplierBtn" class="btn-xanhbo w-100"><i class="fa fa-save"></i> Lưu Nhà cung cấp</button>
+                </div>
+            </div>
+        </div>
+
+        @* CỘT 2: BẢNG DỮ LIỆU *@
+        <div class="col-lg-9">
+             <h4 class="fw-bold text-success mb-3">
+                <i class="fa-solid fa-truck-field"></i> Danh sách Nhà Cung Cấp
+            </h4>
+            
+            <div class="action-bar mb-3 d-flex justify-content-between flex-wrap align-items-center">
+                <div class="search-container me-2">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-0"><i class="fa fa-search text-muted"></i></span>
+                        <input type="text" id="searchBox" class="form-control" placeholder="Theo mã, tên, số điện thoại...">
+                    </div>
+                </div>
+                
+                <div class="d-flex align-items-center gap-2 mt-2 mt-md-0">
+                    <button id="addSupplierBtn" class="btn btn-xanhbo">
+                        <i class="fa fa-plus-circle"></i> Tạo mới
+                    </button>
+                    <button id="exportBtn" class="btn btn-action-blue">
+                        <i class="fa fa-file-export"></i> Xuất file
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table id="supplierTable" class="table table-hover bg-white" style="width:100%">
+                    <thead class="text-center">
+                        <tr>
+                            <th></th> @* Cột 0: Details Control *@
+                            <th>Mã NCC</th> @* Cột 1 *@
+                            <th>Tên NCC</th> @* Cột 2 *@
+                            <th>Điện thoại</th> @* Cột 3 *@
+                            <th>Nợ hiện tại</th> @* Cột 4 *@
+                            <th>Tổng mua</th> @* Cột 5 *@
+                        </tr>
+                    </thead>
+                    <tbody class="text-center">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+/* ----------------------------------------------------- */
+/* JAVASCRIPT LOGIC (ĐÃ CẬP NHẬT) */
+/* ----------------------------------------------------- */
+
+let dataTable;
+// Khai báo biến global cho DataTable
+
+function formatCurrency(number) {
+    if (number == null || isNaN(number)) return '0 đ';
+    const num = parseFloat(number) || 0;
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num).replace('₫', '').trim() + 'đ';
+}
+
+// Hàm này không còn cần thiết vì đã dùng Bootstrap grid system
+// function checkMobile() { ... } 
+
+// ⭐️ HÀM XỬ LÝ XÓA NCC
+function deleteSupplier(maNCC) {
+    // ⭐️ Thay alert bằng custom modal (giả lập alert)
+    if (!confirm(`Bạn có chắc chắn muốn xóa Nhà cung cấp [${maNCC}]? Thao tác này không thể hoàn tác.`)) {
+        return;
+    }
+
+    $.ajax({
+        url: '@Url.Action("DeleteSupplier", "NCC")', 
+        type: 'POST', 
+        contentType: 'application/json',
+        data: JSON.stringify({ MaNCC: maNCC }), 
+        success: function(res) {
+            if (res.success) {
+                 // ⭐️ Thay alert bằng custom modal (giả lập alert)
+                alert(`Đã xóa Nhà cung cấp [${maNCC}] thành công!`); 
+                if (dataTable) {
+                    dataTable.ajax.reload(null, false); 
+                }
+            } else {
+                 // ⭐️ Thay alert bằng custom modal (giả lập alert)
+                alert("Xóa NCC thất bại! Lỗi: " + (res.message || 'Không rõ.'));
+            }
+        },
+        error: function(xhr) {
+            console.error("Lỗi AJAX khi xóa NCC:", xhr.responseText);
+            // ⭐️ Thay alert bằng custom modal (giả lập alert)
+            alert('Có lỗi Server khi thực hiện xóa NCC.');
+        }
+    });
+}
+
+// ⭐️ HÀM MỚI: XỬ LÝ CHỈNH SỬA NCC
+function openEditSupplierModal(maNCC) {
+    // 1. Reset form về trạng thái Edit
+    $('#addSupplierForm').data('mode', 'edit').data('maNCC', maNCC);
+    $('#formTitle').html('<i class="fa fa-edit"></i> Chỉnh sửa Nhà cung cấp: ' + maNCC);
+    $('#saveSupplierBtn').text('Cập Nhật NCC');
+    $('#MaNCC').val(maNCC).prop('readonly', true); // Mã NCC không được sửa
+
+    // 2. Tải dữ liệu NCC
+    $.ajax({
+        url: '@Url.Action("GetNCCById", "NCC")', 
+        type: 'GET', 
+        data: { maNCC: maNCC }, 
+        success: function(res) {
+            if (res.success) {
+                const ncc = res.data;
+                // 3. Đổ dữ liệu vào form
+                $('#TenNCC').val(ncc.ten || ncc.TenNCC); 
+                $('#DienThoai').val(ncc.dienthoai || ncc.DienThoai);
+                $('#NoHienTai').val(ncc.noHienTai || ncc.NoHienTai);
+                $('#TongMua').val(ncc.tongMua || ncc.TongMua);
+                
+                // 4. Hiển thị form
+                $('#addSupplierForm').slideDown();
+            } else {
+                 // ⭐️ Thay alert bằng custom modal (giả lập alert)
+                alert("Lỗi tải thông tin NCC: " + (res.message || 'Không rõ.'));
+            }
+        },
+        error: function() {
+             // ⭐️ Thay alert bằng custom modal (giả lập alert)
+            alert('Lỗi kết nối Server khi tải thông tin NCC.');
+            $('#MaNCC').prop('readonly', false); // Mở lại readonly nếu lỗi
+        }
+    });
+}
+
+
+function applyServerFilter() {
+    let debtMin = parseFloat($('#debtMin').val());
+    let debtMax = parseFloat($('#debtMax').val());
+    let totalMin = parseFloat($('#totalMin').val());
+    let totalMax = parseFloat($('#totalMax').val());
+
+    let hasError = false;
+
+    $('#debtError').text("");
+    $('#totalError').text("");
+    if ($('#debtMin').val() !== "" && $('#debtMax').val() !== "" && debtMin > debtMax) {
+        $('#debtError').text("Tối đa phải lớn hơn tối thiểu");
+        hasError = true;
+    }
+    if ($('#totalMin').val() !== "" && $('#totalMax').val() !== "" && totalMin > totalMax) {
+        $('#totalError').text("Tối đa phải lớn hơn tối thiểu");
+        hasError = true;
+    }
+
+    if(hasError) return;
+
+    if (dataTable) {
+        // Gọi AJAX reload để gửi thông tin filter mới lên server
+        dataTable.ajax.reload();
+    }
+}
+
+function renderAmount(data, type, row) {
+    const num = parseFloat(data) || 0;
+    if (type === 'display') {
+        // Dùng hàm formatCurrency đã định nghĩa
+        return formatCurrency(num);
+    }
+    return num; // Trả về số để sắp xếp
+}
+
+
+$(document).ready(function(){
+    // Loại bỏ logic checkMobile và sidebar wrapper toggle do đã dùng Bootstrap Grid
+
+    // ⭐️ KHỐI KHỞI TẠO DATATABLES ĐÃ ĐƯỢC SỬA TÊN THUỘC TÍNH
+    dataTable = $('#supplierTable').DataTable({
+        dom: 'rtip', 
+        pagingType: 'simple_numbers',
+        order: [[1, 'asc']], 
+        serverSide: false, 
+        processing: true,
+        language: {
+             // Thêm cấu hình tiếng Việt cho DataTables
+            processing: "Đang xử lý...",
+            lengthMenu: "Xem _MENU_ mục",
+            zeroRecords: "Không tìm thấy Nhà cung cấp nào phù hợp",
+            info: "Đang xem _START_ đến _END_ trong tổng số _TOTAL_ mục",
+            infoEmpty: "Đang xem 0 đến 0 trong tổng số 0 mục",
+            infoFiltered: "(được lọc từ _MAX_ mục)",
+            search: "Tìm:",
+            paginate: {
+                first: "Đầu",
+                previous: "Trước",
+                next: "Sau",
+                last: "Cuối"
+            }
+        },
+        ajax: {
+            url: '@Url.Action("GetDanhSachNCC", "NCC")', 
+            type: 'POST',
+            contentType: 'application/json',
+            data: function (d) {
+                const searchTerm = $('#searchBox').val();
+                // ⭐️ Chú ý: Dùng tên thuộc tính trùng với DTO ở Controller
+                const filterDTO = {
+                    SearchTerm: searchTerm,
+                    TongMuaMin: parseFloat($('#totalMin').val()) || null,
+                    TongMuaMax: parseFloat($('#totalMax').val()) || null,
+                    NoHienTaiMin: parseFloat($('#debtMin').val()) || null,
+                    NoHienTaiMax: parseFloat($('#debtMax').val()) || null,
+                };
+                return JSON.stringify(filterDTO);
+            },
+            dataSrc: function (json) {
+                // Giả định json là một mảng dữ liệu NCC (chứ không phải { data: [...] })
+                return json;
+            },
+            error: function (xhr, error, code) {
+                console.error("Lỗi khi tải dữ liệu NCC:", xhr.responseText);
+                 // ⭐️ Thay alert bằng custom modal (giả lập alert)
+                alert("Lỗi tải danh sách NCC. Vui lòng thử lại.");
+                return [];
+            }
+        },
+        columns: [
+            { data: null, defaultContent: '<i class="fa fa-plus-circle"></i>', orderable: false, className: 'details-control' }, 
+            { data: 'ma' }, 
+            { data: 'ten' }, 
+            { data: 'dienthoai' },
+            { data: 'noHienTai', render: renderAmount, type: 'num-fmt' }, 
+            { data: 'tongMua', render: renderAmount, type: 'num-fmt' } 
+        ],
+        columnDefs: [
+            { className: "text-start", targets: [1, 2, 3] }, // Canh trái cho Mã, Tên, SĐT
+            { className: "text-end", targets: [4, 5] }, // Canh phải cho tiền tệ
+            { targets: 4, render: renderAmount, type: 'num-fmt' }, 
+            { targets: 5, render: renderAmount, type: 'num-fmt' }, 
+        ],
+    });
+    
+    // ⭐️ XỬ LÝ SỰ KIỆN CLICK DETAILS CONTROL (Dấu cộng/trừ)
+    $('#supplierTable tbody').on('click','td.details-control',function(){
+        var tr = $(this).closest('tr');
+        var row = dataTable.row(tr);
+        var icon = $(this).find('i');
+
+        if(row.child.isShown()){
+            // Hàng đang mở, đóng lại
+            row.child.hide();
+            icon.removeClass('fa-minus-circle').addClass('fa-plus-circle'); 
+        } else {
+            // Hàng đang đóng, mở ra
+            var d = row.data();
+            row.child(`
+                <div class="detail-info">
+                    <div class="detail-row">
+                        <div class="detail-col"><b>Thông tin</b></div>
+                        <div class="detail-col"><b>Lịch sử nhập/trả hàng</b></div>
+                        <div class="detail-col"><b>Nợ cần trả NCC</b></div>
+                    </div>
+                    <hr style="margin: 5px 0; border-top: 1px solid #eee;">
+                    <div class="detail-row">
+                        <div class="detail-col"><b>Người tạo:</b> ADM KHO -Thương</div>
+                        <div class="detail-col"><b>Ngày tạo:</b> 05/11/2025</div>
+                        <div class="detail-col"><b>Nhóm NCC:</b> Chưa có</div> 
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-col"><b>Điện thoại:</b> ${d.dienthoai || 'Chưa có'}</div> 
+                        <div class="detail-col"><b>Email:</b> Chưa có</div>
+                        <div class="detail-col"><b>Địa chỉ:</b> Chưa có</div>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <button 
+                            onclick="openEditSupplierModal('${d.ma}')"
+                            class="btn btn-xanhbo" style="padding: 5px 10px; font-size: 13px;">
+                            <i class="fa fa-edit"></i> Chỉnh sửa
+                        </button>
+                        <button 
+                            onclick="deleteSupplier('${d.ma}')" 
+                            class="btn btn-danger" style="padding: 5px 10px; font-size: 13px; margin-left: 8px;">
+                            <i class="fa fa-trash"></i> Xóa
+                        </button>
+                    </div>
+                </div>
+            `).show();
+            icon.removeClass('fa-plus-circle').addClass('fa-minus-circle');
+        }
+    });
+
+    // Xử lý tìm kiếm và lọc range
+    $('#searchBox').keyup(function(){ applyServerFilter(); });
+    $('#debtMin, #debtMax, #totalMin, #totalMax').on('input change', function () {
+        applyServerFilter();
+    });
+
+    $('#exportBtn').click(function(){
+         // ⭐️ Thay alert bằng custom modal (giả lập alert)
+        alert('Chức năng Xuất file chưa được lập trình.');
+    });
+
+    // ⭐️ Sự kiện click nút Thêm NCC (Thiết lập chế độ Add)
+    $('#addSupplierBtn').click(function(){
+        // Reset form về trạng thái Add
+        $('#addSupplierForm').data('mode', 'add').removeData('maNCC');
+        $('#formTitle').html('<i class="fa fa-plus"></i> Thêm Nhà cung cấp mới');
+        $('#saveSupplierBtn').text('Lưu Nhà cung cấp');
+        
+        // Reset các trường nhập
+        $('#MaNCC').val('').prop('readonly', false);
+        $('#TenNCC').val('');
+        $('#DienThoai').val('');
+        $('#NoHienTai').val(0);
+        $('#TongMua').val(0);
+        
+        $('#addSupplierForm').slideDown();
+    });
+    
+    /* ⭐️ Gửi AJAX POST để LƯU/CẬP NHẬT VÀO DATABASE */
+    $('#saveSupplierBtn').click(function() {
+        
+        const mode = $('#addSupplierForm').data('mode') || 'add'; 
+        
+        const code = $('#MaNCC').val();
+        const name = $('#TenNCC').val();
+        const contact = $('#DienThoai').val() || null;
+        const debt = parseFloat($('#NoHienTai').val()) || 0;
+        const total = parseFloat($('#TongMua').val()) || 0;
+        
+        if (!code || !name) { 
+             // ⭐️ Thay alert bằng custom modal (giả lập alert)
+            alert("Mã và Tên NCC là bắt buộc."); 
+            return; 
+        }
+
+        const supplierData = {
+            MaNCC: code,
+            TenNCC: name,
+            DienThoai: contact, 
+            NoHienTai: debt, 
+            TongMua: total, 
+        };
+
+        // Quyết định URL dựa trên mode
+        const url = mode === 'add' 
+            ? '@Url.Action("AddSupplier", "NCC")' 
+            : '@Url.Action("UpdateSupplier", "NCC")';
+
+        // Gửi AJAX POST request đến Controller
+        $.ajax({
+            url: url, 
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(supplierData),
+            success: function(response) {
+                if (response.success) {
+                    // ⭐️ Thay alert bằng custom modal (giả lập alert)
+                    alert(response.message);
+                    
+                    // Tải lại DataTables để cập nhật
+                    if (dataTable) {
+                        dataTable.ajax.reload(null, false); 
+                    }
+                    
+                    // Reset form và ẩn
+                    $('#addSupplierForm input').val(''); 
+                    $('#addSupplierForm').slideUp();
+                    
+                    // Reset mode về trạng thái Add
+                    $('#MaNCC').prop('readonly', false);
+                    $('#addSupplierForm').data('mode', 'add').removeData('maNCC');
+                    $('#formTitle').html('<i class="fa fa-plus"></i> Thêm Nhà cung cấp mới');
+                    $('#saveSupplierBtn').text('Lưu Nhà cung cấp');
+
+                } else {
+                     // ⭐️ Thay alert bằng custom modal (giả lập alert)
+                    alert("Lỗi: " + response.message);
+                }
+            },
+            // KHỐI XỬ LÝ LỖI AJAX
+            error: function(xhr) {
+                let errorMsg = "Lỗi kết nối Server. ";
+                if (xhr.status === 409) { 
+                    errorMsg = "Lỗi trùng lặp: Mã NCC đã tồn tại.";
+                } else if (xhr.status === 500) {
+                    errorMsg = "Lỗi 500: Lỗi Server nội bộ. Chi tiết lỗi thường do lỗi DB/EF.";
+                } else if (xhr.status === 400) {
+                    errorMsg = "Lỗi 400: Lỗi dữ liệu gửi lên.";
+                } else if (xhr.status === 404) {
+                    errorMsg = "Lỗi 404: Không tìm thấy NCC cần cập nhật.";
+                }
+
+                let responseJson = null;
+                try {
+                    responseJson = JSON.parse(xhr.responseText);
+                } catch (e) {}
+
+                if (responseJson && responseJson.message) {
+                    errorMsg = responseJson.message;
+                } else if (xhr.responseText && xhr.responseText.length < 200) {
+                    errorMsg += " Chi tiết phản hồi: " + xhr.responseText;
+                }
+                
+                // ⭐️ Thay alert bằng custom modal (giả lập alert)
+                alert(`LỖI ${mode.toUpperCase()} NCC: ` + errorMsg);
+            }
+        });
+    });
+});
+</script>

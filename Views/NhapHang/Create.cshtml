@@ -1,0 +1,587 @@
+@using QuanLyKho.Models
+@using System.Text.Json 
+@model QuanLyKho.Models.PhieuNhapCreateModel
+@{
+    ViewBag.Title = "Thêm phiếu nhập hàng";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .bg-ebike { background: #28a745 !important; color: white; }
+    .text-ebike { color: #28a745 !important; }
+    
+    /* Card nhập liệu nổi bật */
+    .input-card {
+        background-color: #f8f9fa;
+        border: 1px dashed #28a745;
+    }
+    
+    .summary-card {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        background-color: #fff;
+    }
+
+    .form-label.small { font-size: 0.75rem; margin-bottom: 0.2rem; }
+    .form-control, .form-select { height: 38px; font-size: 0.95rem; }
+    
+    /* Style cho danh sách xem trước */
+    .table-preview th { font-size: 0.9rem; }
+    .table-preview td { font-size: 0.9rem; vertical-align: middle; }
+    
+    /* Select2 custom styles for better visibility */
+    .select2-container--bootstrap-5 .select2-selection {
+        height: 38px;
+        font-size: 0.95rem;
+        padding-top: 5px;
+        padding-bottom: 5px;
+    }
+</style>
+
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6"><h1 class="m-0 text-dark">@ViewBag.Title</h1></div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")">Kho</a></li>
+                    <li class="breadcrumb-item"><a href="@Url.Action("Index", "NhapHang")">Nhập hàng</a></li>
+                    <li class="breadcrumb-item active">Tạo mới</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid pt-3">
+        <div class="row">
+            <div class="col-lg-8">
+                
+                <div class="card shadow-sm mb-3">
+                    <div class="card-body">
+                        <h5 class="fw-bold text-dark border-bottom pb-2 mb-3"><i class="fas fa-info-circle me-2 text-ebike"></i> Thông tin Phiếu Nhập</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted fw-bold text-uppercase">Chọn Nhà Cung Cấp</label>
+                                <div class="mb-3">
+                                    <select class="form-select fw-bold" id="slNhaCungCap">
+                                        <option value="">--- Chọn NCC ---</option>
+                                        @if (ViewBag.NhaCungCaps != null)
+                                        {
+                                            foreach (var ncc in ViewBag.NhaCungCaps)
+                                            {
+                                                <option value="@ncc.MaNCC">@ncc.TenNCC</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label small text-muted fw-bold text-uppercase">Ngày Nhập</label>
+                                    <input type="date" class="form-control fw-bold" id="txtNgayNhap" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small text-muted fw-bold text-uppercase">Ghi chú</label>
+                            <input type="text" class="form-control" id="txtGhiChu" placeholder="Ghi chú Phiếu nhập...">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm mb-3">
+                    <div class="card-header bg-ebike">
+                        <h5 class="card-title mb-0 fw-bold fs-6"><i class="fas fa-plus-circle me-2"></i> Nhập chi tiết hàng hóa</h5>
+                    </div>
+                    <div class="card-body input-card">
+                        <div class="row g-2">
+                            <div class="col-md-12 mb-2">
+                                <label class="form-label small text-muted fw-bold">1. Chọn hàng hóa / nhập mã mới <span class="text-danger">*</span></label>
+                                <select class="form-select" id="slHangHoaSelect2"></select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label small text-muted fw-bold">2. Số lượng <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control fw-bold text-center" id="inpSoLuong" value="1" min="1">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small text-muted fw-bold">3. Đơn giá nhập</label>
+                                <input type="text" class="form-control fw-bold text-end" id="inpDonGia" value="0">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small text-muted fw-bold">Thành tiền (Tạm tính)</label>
+                                <input type="text" class="form-control text-end bg-white" id="inpThanhTienPreview" readonly value="0">
+                            </div>
+                            
+                            <div class="col-md-12 mt-3">
+                                <button class="btn btn-dark w-100 fw-bold" id="btnAddToGrid">
+                                    <i class="fas fa-arrow-down me-2"></i> THÊM VÀO DANH SÁCH BÊN DƯỚI
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm mb-3">
+                    <div class="card-body p-0">
+                        <table class="table table-striped table-preview mb-0" id="tblProducts">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th style="width: 5%">#</th>
+                                    <th style="width: 40%">Hàng hóa</th>
+                                    <th style="width: 10%" class="text-center">ĐVT</th>
+                                    <th style="width: 10%" class="text-center">SL</th>
+                                    <th style="width: 15%" class="text-end">Đơn giá</th>
+                                    <th style="width: 15%" class="text-end">Thành tiền</th>
+                                    <th style="width: 5%"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td colspan="7" class="text-center text-muted py-3">Chưa có hàng hóa nào trong phiếu</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card-footer bg-white">
+                        <button class="btn btn-outline-danger btn-sm" id="btnRemoveAll">
+                            Xóa tất cả
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card summary-card sticky-top" style="top: 20px;">
+                    <div class="card-body">
+                        <h5 class="fw-bold text-dark border-bottom pb-2 mb-3"><i class="fas fa-calculator me-2 text-ebike"></i> Thanh toán</h5>
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Tổng tiền hàng:</span>
+                            <span class="fw-bold text-dark fs-5" id="txtTongTienHang">0 ₫</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between mb-3">
+                            <h5 class="m-0 text-ebike fw-bold">TỔNG CỘNG:</h5>
+                            <h5 class="m-0 fw-bold text-ebike fs-4" id="txtTongCong">0 ₫</h5>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small text-muted fw-bold text-uppercase">Thanh toán:</label>
+                            <input type="text" class="form-control text-end fw-bold" id="txtTienThanhToan" value="0">
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label small text-muted fw-bold text-uppercase">Còn nợ:</label>
+                            <input type="text" class="form-control text-end fw-bold text-danger" id="txtTienThua" readonly value="0">
+                        </div>
+
+                        <button class="btn bg-ebike w-100 fw-bold py-2 mb-2" id="btnHoanTatNhap">
+                            <i class="fas fa-save me-1"></i> HOÀN TẤT
+                        </button>
+                        <a href="@Url.Action("Index")" class="btn btn-outline-secondary w-100">Quay lại</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/js/select2.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+
+    <script>
+        let cartProducts = []; 
+        let currentHangHoas = []; // Giữ nguyên để tránh thay đổi quá nhiều logic
+        $(document).ready(function () {
+            
+            // Hàm tiện ích: chuyển đổi tiền tệ
+            function parseCurrency(text) {
+                // Chỉ giữ lại số, bỏ các ký tự khác (bao gồm dấu chấm/phẩy phân cách hàng nghìn)
+                const cleaned = text.toString().replace(/[^\d]/g, '');
+                return cleaned ? parseFloat(cleaned) : 0;
+            }
+
+            function formatCurrency(number) {
+                if (typeof number !== 'number' || isNaN(number)) return '0';
+                // Sử dụng Intl.NumberFormat để đảm bảo định dạng Việt Nam (phân cách 3 số)
+                return number.toLocaleString('vi-VN');
+            }
+            
+            // --- 1. KHỞI TẠO SELECT2 ---
+            function initSelect2(selectedId = null) {
+
+                if ($('#slHangHoaSelect2').data('select2')) {
+                    $('#slHangHoaSelect2').select2('destroy');
+                }
+                
+                $('#slHangHoaSelect2').select2({
+                    placeholder: 'Tìm kiếm hoặc Xuất Mã hàng mới...',
+                    allowClear: true,
+                    width: '100%',
+                    theme: 'bootstrap-5',
+                    minimumInputLength: 2, 
+                    
+                    // Cấu hình AJAX để gọi đến Controller
+                    ajax: {
+                        // URL: Cần đảm bảo action SearchProduct (trong NhapHangController) trả về JSON
+                        url: '@Url.Action("SearchProduct", "NhapHang")',
+                        dataType: 'json',
+                        delay: 250, 
+                        data: function (params) {
+                            return {
+                                term: params.term, 
+                                page: params.page
+                            };
+                        },
+                        processResults: function (data, params) {
+                            // BƯỚC QUAN TRỌNG: DEBUG dữ liệu trả về từ Server tại đây.
+                            // Server PHẢI trả về Array (list) các đối tượng.
+                            // Console.log(data) để kiểm tra server có trả về dữ liệu không.
+                            console.log("Dữ liệu trả về từ SearchProduct:", data);
+
+                            const results = data.map(item => ({
+                                id: item.maHH, 
+                                text: item.tenHH, // Tên để hiển thị mặc định
+                                maHang: item.maHH,
+                                tenHang: item.tenHH,
+                                tonKho: item.tonKho,
+                                // ĐIỀU CHỈNH: Dùng GiaVon (giá vốn) hoặc GiaNhap cho phiếu Nhập, 
+                                // nếu server chỉ trả về GiaBan thì ta dùng GiaBan và người dùng phải sửa lại.
+                                giaBan: item.giaBan || item.giaVon || 0, 
+                                loaiHang: item.dvt || 'Cái' 
+                            }));
+
+                            return {
+                                results: results,
+                                pagination: {
+                                    more: false 
+                                }
+                            };
+                        },
+                        cache: true    
+                    },
+                    
+                    // Custom template để hiển thị thông tin thêm (Mã hàng)
+                    templateResult: function(data) {
+                        if (data.loading) return data.text;
+                        
+                        // Kiểm tra nếu là Tag mới được tạo
+                        if (data.tag) {
+                            return $(`<span class="text-success fw-bold">Tạo mới: ${data.text}</span>`);
+                        }
+                        
+                        // Hiển thị Mã hàng và Tên hàng
+                        const ma = data.maHang || data.id;
+                        const ten = data.tenHang || data.text;
+
+                        return $(`
+                            <div>
+                                <span class="fw-bold text-primary">${ma}</span> - 
+                                <span class="text-dark">${ten}</span>
+                                <span class="float-end text-muted small">Tồn: ${data.tonKho || 0}</span>
+                            </div>
+                        `);
+                    },
+                    
+                    templateSelection: function(data) {
+                        // Khi đã chọn, hiển thị Mã và Tên
+                        if (data.maHang || data.id) {
+                            return `${data.maHang || data.id} - ${data.tenHang || data.text}`;
+                        }
+                        return data.text;
+                    },
+
+                    // Cho phép tạo Tag mới (Hàng hóa chưa có)
+                    tags: true, 
+                    createTag: function (params) {
+                        const term = params.term.trim().toUpperCase();
+                        if (term.length >= 2) { // Giảm xuống 2 ký tự cho dễ test
+                            return { 
+                                id: term, 
+                                text: 'Tạo mã mới: ' + term, 
+                                tag: true, 
+                                maHang: term, 
+                                tenHang: term, 
+                                loaiHang: 'Cái', 
+                                giaBan: 0, 
+                                tonKho: 0
+                            };
+                        }
+                        return null;
+                    }
+                });
+
+                if (selectedId) {
+                    // Nếu là hàng mới được tạo (tag) thì không cần set value, vì nó đã được set trong createTag
+                    // Tuy nhiên, nếu server trả về dữ liệu sau khi tạo thành công, ta vẫn có thể set.
+                    // Ở đây ta dùng initSelect2 để giữ giá trị nếu có.
+                    const option = new Option(selectedId, selectedId, true, true);
+                    $('#slHangHoaSelect2').append(option).trigger('change');
+                }
+            }
+
+            initSelect2();
+
+            // --- 2. SỰ KIỆN TRÊN FORM NHẬP LIỆU ---
+            
+            // Khi chọn hàng hóa -> Tự động điền giá vào ô Đơn giá
+            $('#slHangHoaSelect2').on('select2:select', function (e) {
+                const data = e.params.data;
+                let price = 0;
+                
+                console.log("Sản phẩm đã chọn:", data);
+
+                if (data.tag) {
+                    price = 0; // Hàng mới -> Giá = 0
+                } else {
+                    // Cố gắng lấy giá từ các thuộc tính đã map
+                    price = data.giaBan || data.giaVon || 0; 
+                }
+                
+                $('#inpDonGia').val(formatCurrency(price));
+                $('#inpSoLuong').val(1).focus(); 
+                updatePreviewTotal();
+            });
+
+            // Định dạng tiền tệ khi Nhập ô Đơn giá
+            $('#inpDonGia').on('input', function() {
+                let val = parseCurrency($(this).val());
+                $(this).val(formatCurrency(val));
+                updatePreviewTotal();
+            });
+
+            // Tính thành tiền tạm tính khi đổi SL hoặc Đơn giá
+            $('#inpSoLuong').on('input', updatePreviewTotal);
+            
+            function updatePreviewTotal() {
+                let sl = parseInt($('#inpSoLuong').val()) || 0;
+                let dg = parseCurrency($('#inpDonGia').val());
+                $('#inpThanhTienPreview').val(formatCurrency(sl * dg));
+            }
+
+            // --- 3. THÊM VÀO DANH SÁCH (CART) ---
+            $('#btnAddToGrid').click(function() {
+                const selectedData = $('#slHangHoaSelect2').select2('data')[0];
+                const sl = parseInt($('#inpSoLuong').val());
+                const dg = parseCurrency($('#inpDonGia').val());
+                
+                if (!selectedData || !selectedData.id) {
+                    // Thay thế alert bằng một modal hoặc toast notification nếu có
+                    alert("Vui lòng chọn hàng hóa!");
+                    $('#slHangHoaSelect2').select2('open');
+                    return;
+                }
+                if (isNaN(sl) || sl <= 0) {
+                    alert("Số lượng phải lớn hơn 0");
+                    $('#inpSoLuong').focus();
+                    return;
+                }
+
+                // Lấy thông tin chi tiết của hàng hóa
+                let tenHang = selectedData.tenHang || selectedData.text || selectedData.id;
+                let loaiHang = selectedData.loaiHang || 'Cái'; 
+                
+                // Trường hợp tag mới (maHang = tenHang = id)
+                if (selectedData.tag) {
+                    tenHang = selectedData.id;
+                    loaiHang = 'Cái';
+                }
+
+                let productObj = {
+                    ma: selectedData.id,
+                    ten: tenHang,
+                    dvt: loaiHang,
+                    sl: sl, 
+                    dg: dg,
+                    stt: Date.now() // Unique ID tạm
+                };
+
+                // Kiểm tra trùng lặp trong Cart
+                const existingIndex = cartProducts.findIndex(p => p.ma === productObj.ma);
+                if (existingIndex >= 0) {
+                    if(confirm(`Hàng hóa ${productObj.ten} đã có trong Phiếu. Bạn có muốn cộng dồn số lượng và cập nhật đơn giá mới nhất không?`)) {
+                        cartProducts[existingIndex].sl += sl;
+                        cartProducts[existingIndex].dg = dg; // Cập nhật giá mới nhất
+                    }
+                } else {
+                    cartProducts.push(productObj);
+                }
+
+                // Render lại bảng & Reset form
+                renderCartTable();
+                
+                // Reset form
+                $('#slHangHoaSelect2').val(null).trigger('change');
+                $('#inpSoLuong').val(1);
+                $('#inpDonGia').val(0);
+                $('#inpThanhTienPreview').val(0);
+            });
+
+            // --- 4. RENDER BẢNG DANH SÁCH ---
+            function renderCartTable() {
+                const $tbody = $('#tblProducts tbody');
+                $tbody.empty();
+                let tongTienHang = 0;
+
+                if (cartProducts.length === 0) {
+                    $tbody.append('<tr><td colspan="7" class="text-center text-muted py-3">Chưa có hàng hóa nào trong Phiếu</td></tr>');
+                    updateFooter(0);
+                    return;
+                }
+
+                const displayList = cartProducts; 
+
+                displayList.forEach((p, index) => {
+                    const thanhTien = p.sl * p.dg;
+                    tongTienHang += thanhTien;
+                    
+                    const row = `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>
+                                <span class="fw-bold text-primary">${p.ma}</span><br/>
+                                <span class="text-muted small">${p.ten}</span>
+                            </td>
+                            <td class="text-center">${p.dvt}</td>
+                            <td class="text-center fw-bold">${p.sl}</td>
+                            <td class="text-end">${formatCurrency(p.dg)}</td>
+                            <td class="text-end fw-bold">${formatCurrency(thanhTien)}</td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-light text-danger btn-remove-item" data-stt="${p.stt}">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    $tbody.append(row);
+                });
+                
+                // Cập nhật tổng tiền dưới footer
+                updateFooter(tongTienHang);
+            }
+
+            // Xóa item khỏi danh sách
+            $(document).on('click', '.btn-remove-item', function() {
+                const stt = $(this).data('stt');
+                if(confirm('Bạn có chắc chắn muốn xóa hàng hóa này khỏi phiếu nhập?')) {
+                    cartProducts = cartProducts.filter(p => p.stt !== stt);
+                    renderCartTable();
+                }
+            });
+
+            // Xóa tất cả
+            $('#btnRemoveAll').click(function() {
+                if(cartProducts.length > 0 && confirm('Xóa hết danh sách?')) {
+                    cartProducts = [];
+                    renderCartTable();
+                }
+            });
+
+            // --- 5. TÍNH TOÁN THANH TOÁN ---
+            function updateFooter(tongTienHang) {
+                $('#txtTongTienHang').text(formatCurrency(tongTienHang) + ' ₫');
+                $('#txtTongCong').text(formatCurrency(tongTienHang) + ' ₫');
+                calculateDebt(tongTienHang);
+            }
+
+            // Định dạng tiền tệ cho ô Thanh toán
+            $('#txtTienThanhToan').on('input', function() {
+                let val = parseCurrency($(this).val());
+                $(this).val(formatCurrency(val));
+                
+                const tongTien = parseCurrency($('#txtTongCong').text());
+                calculateDebt(tongTien);
+            });
+            
+            // Cập nhật giá trị đã trả và tính nợ khi focusout
+            $('#txtTienThanhToan').on('blur', function() {
+                const tongTien = parseCurrency($('#txtTongCong').text());
+                calculateDebt(tongTien);
+            });
+            
+            function calculateDebt(tongTien) {
+                let daTra = parseCurrency($('#txtTienThanhToan').val());
+                let conNo = tongTien - daTra; 
+                
+                $('#txtTienThua').val(formatCurrency(conNo));
+                
+                // conNo > 0: Còn Nợ (text-danger), conNo <= 0: Đã thanh toán đủ (hoặc thừa) (text-success)
+                $('#txtTienThua').removeClass('text-danger text-success').addClass(conNo > 0 ? 'text-danger' : 'text-success');
+                
+                // Nếu chưa nhập gì, coi như chưa thanh toán
+                if (daTra === 0 && tongTien > 0) {
+                    $('#txtTienThua').val(formatCurrency(tongTien)).addClass('text-danger');
+                }
+            }
+
+            // --- 6. SUBMIT Phiếu Nhập (LƯU DB) ---
+            $('#btnHoanTatNhap').click(function() {
+                const maNCC = $('#slNhaCungCap').val(); 
+                if (!maNCC) { alert("Chưa chọn Nhà Cung Cấp!"); return; }
+                
+                if (cartProducts.length === 0) { alert("Danh sách hàng hóa đang trống!"); return; }
+
+                const chiTiet = cartProducts.map(p => ({
+                    MaHH: p.ma,
+                    Sl: p.sl, 
+                    Dg: p.dg,
+                    ThanhTien: p.sl * p.dg 
+                }));
+                
+                const tongTienHang = cartProducts.reduce((sum, p) => sum + (p.sl * p.dg), 0);
+                // Giả sử GiamGia và TongGiaTri không sử dụng trong logic này
+                const giamGia = 0; // Để 0 nếu không có input giảm giá
+                
+                // Lấy tiền thanh toán thực tế (để gửi lên server lưu nợ)
+                const daThanhToan = parseCurrency($('#txtTienThanhToan').val());
+                const conNo = tongTienHang - daThanhToan;
+
+                const formData = {
+                    MaPN: $('#txtMaPN').val(), // Nếu server tự tạo thì không cần, nếu không thì cần
+                    NgayNhap: $('#txtNgayNhap').val(), 
+                    GhiChu: $('#txtGhiChu').val(),
+                    MaNCC: maNCC,
+                    TongTienHang: tongTienHang, // Tổng tiền hàng chưa trừ giảm giá
+                    TongGiaTri: tongTienHang, // Giả sử Tổng giá trị = Tổng tiền hàng nếu không có giảm giá
+                    TienDaThanhToan: daThanhToan, // Tiền thực tế đã trả
+                    TienConNo: conNo, // Tiền còn nợ
+                    ChiTiet: chiTiet 
+                };
+                
+                // Gọi AJAX
+                const $btn = $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Đang lưu...');
+                
+                $.ajax({
+                    url: '@Url.Action("Create", "NhapHang")',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(formData),
+                    success: function (res) {
+                        if (res.success) {
+                            alert("Thành công! Mã Phiếu Nhập: " + res.maPhieuNhap); 
+                            window.location.href = '@Url.Action("Index", "NhapHang")';
+                        } else {
+                            alert("Lỗi: " + res.message);
+                            $btn.prop('disabled', false).html('<i class="fas fa-save me-1"></i> HOÀN TẤT');
+                        }
+                    },
+                    error: function(err) {
+                        alert("Lỗi server hoặc lỗi kết nối.");
+                        $btn.prop('disabled', false).html('<i class="fas fa-save me-1"></i> HOÀN TẤT');
+                    }
+                });
+            });
+            
+            // Khởi tạo các giá trị ban đầu
+            updatePreviewTotal();
+            renderCartTable();
+            const initialTongCong = parseCurrency($('#txtTongCong').text() || '0');
+            calculateDebt(initialTongCong); 
+        });
+    </script>
+}

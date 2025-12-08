@@ -1,0 +1,440 @@
+@using Microsoft.AspNetCore.Http
+@{
+    ViewData["Title"] = "Xem Báo Cáo Nhập";
+    var user = Context.Session.GetString("User");
+}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+    /* AdminLTE custom styles */
+    .callout-success { border-left-color: #28a745; }
+    .bg-gradient-success { background: linear-gradient(135deg, #28a745, #1d6f34) !important; color: white; }
+    .card-success:not(.card-outline) > .card-header { background-color: #28a745; color: white; }
+    .card-outline.card-success { border-top: 3px solid #28a745; }
+    .badge.bg-success { background-color: #28a745 !important; }
+    .badge.bg-info { background-color: #17a2b8 !important; }
+    .badge.bg-warning { background-color: #ffc107 !important; color: black; }
+    .form-check-input:checked { background-color: #28a745; border-color: #28a745; }
+    
+    /* Cấu hình chung cho info-box */
+    .info-box {
+        border-radius: 6px;
+        box-shadow: 0 0 1px rgba(0,0,0,.125), 0 1px 3px rgba(0,0,0,.2);
+    }
+</style>
+
+<div class="container-fluid">
+
+    <div class="callout callout-success mb-4">
+        <h4 class="fw-semibold">
+            <i class="fas fa-box-open mr-2"></i> Báo cáo nhập hàng
+        </h4>
+        <p class="mb-0">
+            Xin chào, **@(user ?? "Người dùng")**
+        </p>
+    </div>
+
+    <div class="row">
+        
+        <div class="col-md-3">
+            <div class="card card-outline card-success mb-4">
+                <div class="card-header">
+                    <h3 class="card-title fw-bold">Bộ lọc</h3>
+                </div>
+                <div class="card-body">
+                    <form id="filterForm"> 
+                        
+                        <div class="form-group mb-3 pt-2">
+                            <label class="form-label fw-semibold">Trạng thái</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="Status" value="Phiếu tạm" id="status1" checked>
+                                <label class="form-check-label" for="status1">Phiếu tạm</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="Status" value="Đã nhập hàng" id="status2" checked>
+                                <label class="form-check-label" for="status2">Đã nhập hàng</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="Status" value="Hoàn tất" id="status4" checked>
+                                <label class="form-check-label" for="status4">Hoàn tất</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="Status" value="Đã xác nhận" id="status5" checked>
+                                <label class="form-check-label" for="status5">Đã xác nhận</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="Status" value="Đang xử lý" id="status6" checked>
+                                <label class="form-check-label" for="status6">Đang xử lý</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="Status" value="Đã hủy" id="status3">
+                                <label class="form-check-label" for="status3">Đã hủy</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3 border-top pt-2">
+                            <label class="form-label fw-semibold">Thời gian</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="TimeFilter" id="time1" value="month" checked>
+                                <label class="form-check-label" for="time1">Tháng này</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="TimeFilter" id="time2" value="custom">
+                                <label class="form-check-label" for="time2">Tùy chỉnh</label>
+                            </div>
+                        </div>
+
+                        <div id="dateRange" style="display: none;" class="row mb-3">
+                            <div class="col-6">
+                                <label class="form-label small">Từ ngày</label>
+                                <input type="date" class="form-control form-control-sm" name="TuNgay">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small">Đến ngày</label>
+                                <input type="date" class="form-control form-control-sm" name="DenNgay">
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3 border-top pt-2">
+                            <label class="form-label fw-semibold">Nhà cung cấp</label>
+                            <select class="form-control form-control-sm" name="NhaCungCap">
+                                <option value="all" selected>Tất cả</option>
+                                <option value="VIPOMALL">VIPOMALL</option>
+                                <option value="SAKI">SAKI</option>
+                                <option value="EBIKE Phụ Tùng">EBIKE Phụ Tùng</option>
+                            </select>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-success mt-2" onclick="applyFilters()">
+                                <i class="fas fa-filter"></i> Lọc báo cáo
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-9">
+
+            <div class="row mb-4">
+                <div class="col-md-4 col-sm-6 col-12">
+                    <div class="info-box bg-gradient-success">
+                        <span class="info-box-icon"><i class="fas fa-file-invoice"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">Tổng số phiếu nhập</span>
+                            <span class="info-box-number" id="totalPhieuNhap">12</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 col-12">
+                    <div class="info-box bg-gradient-success">
+                        <span class="info-box-icon"><i class="fas fa-money-bill-wave"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">Tổng giá trị nhập</span>
+                            <span class="info-box-number" id="totalGiaTri">156,800,000 ₫</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 col-12">
+                    <div class="info-box bg-gradient-success">
+                        <span class="info-box-icon"><i class="fas fa-handshake"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">Số nhà cung cấp tham gia</span>
+                            <span class="info-box-number" id="totalNCC">3</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header bg-success">
+                    <h3 class="card-title text-white">Chi tiết phiếu nhập</h3>
+                    <div class="card-tools">
+                        <input type="text" id="tableSearch" class="form-control form-control-sm" placeholder="Tìm kiếm trong bảng...">
+                    </div>
+                </div>
+                <div class="card-body p-0 table-responsive">
+                    <table id="baoCaoNhapTable" class="table table-hover table-striped">
+                        <thead>
+                            <tr>
+                                <th>Mã phiếu</th>
+                                <th>Ngày nhập</th>
+                                <th>Nhà cung cấp</th>
+                                <th>Tổng giá trị</th>
+                                <th>Trạng thái</th>
+                                <th>#</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>PN00452</td><td>03/11/2025</td><td>VIPOMALL</td><td>12,600,000</td><td><span class="badge bg-success">Hoàn tất</span></td><td><a href="#" class="text-info"><i class="fas fa-eye"></i></a></td></tr>
+                            <tr><td>PN00451</td><td>02/11/2025</td><td>SAKI</td><td>24,000,000</td><td><span class="badge bg-info">Đã xác nhận</span></td><td><a href="#" class="text-info"><i class="fas fa-eye"></i></a></td></tr>
+                            <tr><td>PN00449</td><td>01/11/2025</td><td>EBIKE Phụ Tùng</td><td>18,450,000</td><td><span class="badge bg-warning">Đang xử lý</span></td><td><a href="#" class="text-info"><i class="fas fa-eye"></i></a></td></tr>
+                            <tr><td>PN00448</td><td>31/10/2025</td><td>VIPOMALL</td><td>15,000,000</td><td><span class="badge bg-success">Hoàn tất</span></td><td><a href="#" class="text-info"><i class="fas fa-eye"></i></a></td></tr>
+                            <tr><td>PN00447</td><td>30/10/2025</td><td>SAKI</td><td>9,200,000</td><td><span class="badge bg-warning">Đang xử lý</span></td><td><a href="#" class="text-info"><i class="fas fa-eye"></i></a></td></tr>
+                            <tr><td>PN00446</td><td>29/10/2025</td><td>VIPOMALL</td><td>5,500,000</td><td><span class="badge bg-success">Hoàn tất</span></td><td><a href="#" class="text-info"><i class="fas fa-eye"></i></a></td></tr>
+                            <tr><td>PN00445</td><td>28/10/2025</td><td>EBIKE Phụ Tùng</td><td>30,000,000</td><td><span class="badge bg-info">Đã xác nhận</span></td><td><a href="#" class="text-info"><i class="fas fa-eye"></i></a></td></tr>
+                            <tr><td>PN00444</td><td>27/10/2025</td><td>VIPOMALL</td><td>15,850,000</td><td><span class="badge bg-success">Hoàn tất</span></td><td><a href="#" class="text-info"><i class="fas fa-eye"></i></a></td></tr>
+                            <tr><td>PN00443</td><td>26/10/2025</td><td>SAKI</td><td>10,000,000</td><td><span class="badge bg-success">Hoàn tất</span></td><td><a href="#" class="text-info"><i class="fas fa-eye"></i></a></td></tr>
+                            <tr><td>PN00442</td><td>25/10/2025</td><td>EBIKE Phụ Tùng</td><td>3,700,000</td><td><span class="badge bg-warning">Đang xử lý</span></td><td><a href="#" class="text-info"><i class="fas fa-eye"></i></a></td></tr>
+                            <tr><td>PN00441</td><td>24/10/2025</td><td>SAKI</td><td>5,500,000</td><td><span class="badge bg-info">Đã xác nhận</span></td><td><a href="#" class="text-info"><i class="fas fa-eye"></i></a></td></tr>
+                            <tr><td>PN00440</td><td>23/10/2025</td><td>VIPOMALL</td><td>2,500,000</td><td><span class="badge bg-success">Hoàn tất</span></td><td><a href="#" class="text-info"><i class="fas fa-eye"></i></a></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card card-success card-outline">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-chart-bar mr-1"></i>
+                        Thống kê giá trị nhập theo nhà cung cấp
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <canvas id="chartNhap" height="150"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 
+
+@section Scripts {
+    <script>
+        // Dữ liệu giả lập cho toàn bộ phiếu nhập
+        const allReports = [
+            { ma: 'PN00452', ngay: '03/11/2025', ncc: 'VIPOMALL', chinhanh: 'CN Nguyễn Văn Cừ', giatri: 12600000, status: 'Hoàn tất' },
+            { ma: 'PN00451', ngay: '02/11/2025', ncc: 'SAKI', chinhanh: 'CN Lê Lợi', giatri: 24000000, status: 'Đã xác nhận' },
+            { ma: 'PN00449', ngay: '01/11/2025', ncc: 'EBIKE Phụ Tùng', chinhanh: 'CN Quang Trung', giatri: 18450000, status: 'Đang xử lý' },
+            { ma: 'PN00448', ngay: '31/10/2025', ncc: 'VIPOMALL', chinhanh: 'CN Nguyễn Văn Cừ', giatri: 15000000, status: 'Hoàn tất' },
+            { ma: 'PN00447', ngay: '30/10/2025', ncc: 'SAKI', chinhanh: 'CN Lê Lợi', giatri: 9200000, status: 'Đang xử lý' },
+            { ma: 'PN00446', ngay: '29/10/2025', ncc: 'VIPOMALL', chinhanh: 'CN Quang Trung', giatri: 5500000, status: 'Hoàn tất' },
+            { ma: 'PN00445', ngay: '28/10/2025', ncc: 'EBIKE Phụ Tùng', chinhanh: 'CN Nguyễn Văn Cừ', giatri: 30000000, status: 'Đã xác nhận' },
+            { ma: 'PN00444', ngay: '27/10/2025', ncc: 'VIPOMALL', chinhanh: 'CN Nguyễn Văn Cừ', giatri: 15850000, status: 'Hoàn tất' },
+            { ma: 'PN00443', ngay: '26/10/2025', ncc: 'SAKI', chinhanh: 'CN Lê Lợi', giatri: 10000000, status: 'Hoàn tất' },
+            { ma: 'PN00442', ngay: '25/10/2025', ncc: 'EBIKE Phụ Tùng', chinhanh: 'CN Quang Trung', giatri: 3700000, status: 'Đang xử lý' },
+            { ma: 'PN00441', ngay: '24/10/2025', ncc: 'SAKI', chinhanh: 'CN Nguyễn Văn Cừ', giatri: 5500000, status: 'Đã xác nhận' },
+            { ma: 'PN00440', ngay: '23/10/2025', ncc: 'VIPOMALL', chinhanh: 'CN Lê Lợi', giatri: 2500000, status: 'Hoàn tất' },
+        ];
+        
+        let chartNhapInstance;
+
+        // Hàm chuyển đổi định dạng ngày DD/MM/YYYY sang Date object
+        function parseDate(str) {
+            const parts = str.split('/');
+            // new Date(year, monthIndex, day)
+            return new Date(parts[2], parts[1] - 1, parts[0]); 
+        }
+
+        // Hàm định dạng tiền tệ
+        function formatCurrency(number) {
+            // Loại bỏ ký hiệu ₫ để khớp với dữ liệu mẫu trong HTML
+            return new Intl.NumberFormat('vi-VN').format(number);
+        }
+
+        // Hàm chuyển đổi trạng thái sang badge
+        function getStatusBadge(status) {
+            let className = '';
+            switch(status) {
+                case 'Hoàn tất':
+                case 'Đã nhập hàng':
+                    className = 'bg-success';
+                    break;
+                case 'Đã xác nhận':
+                case 'Phiếu tạm':
+                    className = 'bg-info';
+                    break;
+                case 'Đang xử lý':
+                    className = 'bg-warning';
+                    break;
+                case 'Đã hủy':
+                    className = 'bg-danger';
+                    break;
+                default:
+                    className = 'bg-secondary';
+            }
+            return `<span class="badge ${className}">${status}</span>`;
+        }
+
+        // --- HÀM RENDER DỮ LIỆU ---
+        function renderData(data) {
+            const tbody = document.querySelector('#baoCaoNhapTable tbody');
+            tbody.innerHTML = '';
+            
+            let totalGiaTri = 0;
+            const uniqueNcc = new Set();
+            
+            data.forEach(report => {
+                totalGiaTri += report.giatri;
+                uniqueNcc.add(report.ncc);
+                
+                // CHỈ RENDER các cột còn lại (Mã phiếu, Ngày nhập, Nhà cung cấp, Tổng giá trị, Trạng thái)
+                const row = `
+                    <tr>
+                        <td>${report.ma}</td>
+                        <td>${report.ngay}</td>
+                        <td>${report.ncc}</td>
+                        <td>${formatCurrency(report.giatri)}</td>
+                        <td>${getStatusBadge(report.status)}</td>
+                        <td><a href="#" class="text-info"><i class="fas fa-eye"></i></a></td>
+                    </tr>
+                `;
+                tbody.insertAdjacentHTML('beforeend', row);
+            });
+            
+            // Cập nhật các Info Box
+            document.getElementById('totalPhieuNhap').textContent = data.length;
+            document.getElementById('totalGiaTri').textContent = formatCurrency(totalGiaTri) + ' ₫';
+            document.getElementById('totalNCC').textContent = uniqueNcc.size;
+            
+            updateChart(data);
+        }
+        
+        // --- HÀM ÁP DỤNG LỌC ---
+        function applyFilters() {
+            const form = document.getElementById('filterForm');
+            const statusCheckboxes = Array.from(form.querySelectorAll('[name="Status"]:checked')).map(cb => cb.value);
+            const timeFilter = form.querySelector('[name="TimeFilter"]:checked').value;
+            const tuNgay = form.querySelector('[name="TuNgay"]').value;
+            const denNgay = form.querySelector('[name="DenNgay"]').value;
+            const ncc = form.querySelector('[name="NhaCungCap"]').value;
+            
+            const tableSearch = document.getElementById('tableSearch').value.toLowerCase();
+
+
+            const filteredReports = allReports.filter(report => {
+                
+                // 1. Lọc theo Nhà cung cấp
+                if (ncc !== 'all' && report.ncc !== ncc) return false;
+                
+                // 2. Lọc theo Trạng thái
+                if (statusCheckboxes.length > 0 && !statusCheckboxes.includes(report.status)) return false;
+
+                // 3. Lọc theo Thời gian
+                const reportDate = parseDate(report.ngay);
+                if (timeFilter === 'custom') {
+                    if (tuNgay) {
+                        const start = new Date(tuNgay);
+                        if (reportDate < start) return false;
+                    }
+                    if (denNgay) {
+                        const end = new Date(denNgay);
+                        end.setDate(end.getDate() + 1); 
+                        if (reportDate >= end) return false;
+                    }
+                } else if (timeFilter === 'month') {
+                    // Logic lọc Tháng này (giả định đang là T11/2025)
+                    const now = new Date();
+                    const currentMonth = now.getMonth();
+                    const currentYear = now.getFullYear();
+                    
+                    if (reportDate.getMonth() !== currentMonth || reportDate.getFullYear() !== currentYear) {
+                        const isNovember2025 = reportDate.getMonth() === 10 && reportDate.getFullYear() === 2025;
+                        if (!isNovember2025) return false; 
+                    }
+                }
+                
+                // 4. Lọc theo ô tìm kiếm (Mã phiếu, Tên NCC, Tên Chi nhánh)
+                if (tableSearch) {
+                    // Vẫn giữ lại chi nhánh trong chuỗi tìm kiếm để người dùng có thể tìm kiếm theo chi nhánh mặc dù cột đã bị ẩn.
+                    const searchTarget = `${report.ma} ${report.ncc} ${report.chinhanh} ${report.status}`.toLowerCase();
+                    if (!searchTarget.includes(tableSearch)) return false;
+                }
+                
+                return true;
+            });
+
+            renderData(filteredReports);
+        }
+
+        // --- HÀM CẬP NHẬT BIỂU ĐỒ ---
+        function updateChart(data) {
+            const nccData = data.reduce((acc, report) => {
+                acc[report.ncc] = (acc[report.ncc] || 0) + report.giatri;
+                return acc;
+            }, {});
+
+            const labels = Object.keys(nccData);
+            const values = Object.values(nccData);
+            
+            if (chartNhapInstance) {
+                chartNhapInstance.data.labels = labels;
+                chartNhapInstance.data.datasets[0].data = values;
+                chartNhapInstance.update();
+            }
+        }
+        
+        // --- KHỞI TẠO BIỂU ĐỒ VÀ SỰ KIỆN ---
+        document.addEventListener('DOMContentLoaded', function() {
+            // Ẩn/hiện bộ lọc ngày tùy chỉnh
+            const radioButtons = document.querySelectorAll('input[name="TimeFilter"]');
+            const dateRangeDiv = document.getElementById('dateRange');
+
+            radioButtons.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.value === 'custom') {
+                        dateRangeDiv.style.display = 'flex';
+                    } else {
+                        dateRangeDiv.style.display = 'none';
+                    }
+                });
+            });
+            
+            // Xử lý tìm kiếm trong bảng
+            document.getElementById('tableSearch').addEventListener('keyup', function() {
+                 applyFilters(); 
+            });
+
+            // Khởi tạo biểu đồ
+            const ctx = document.getElementById('chartNhap').getContext('2d');
+            chartNhapInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [], // Sẽ được cập nhật bằng JS
+                    datasets: [{
+                        label: 'Giá trị nhập (VND)',
+                        data: [], // Sẽ được cập nhật bằng JS
+                        backgroundColor: '#28a745', 
+                        borderColor: '#218838',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value, index, values) {
+                                    return formatCurrency(value) + ' ₫'; // Định dạng tiền tệ cho trục Y
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += formatCurrency(context.parsed.y) + ' ₫';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Lần đầu tải trang: áp dụng bộ lọc mặc định ('Tháng này')
+            applyFilters();
+        });
+    </script>
+}

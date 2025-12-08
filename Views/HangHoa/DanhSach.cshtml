@@ -1,0 +1,531 @@
+@{
+    ViewBag.Title = "Danh sách hàng hóa";
+    Layout = "/Views/Shared/_Layout.cshtml";
+}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<style>
+    :root {
+        --primary-green-dark: #28a745; 
+        --table-header-bg: white; 
+        --table-header-color: #4a4a4a; 
+        --background-color: #f7fcf7;
+        --shadow-color: rgba(0, 0, 0, 0.08);
+        --border-color: #e1e1e1;
+        --action-blue: #007bff;
+        --light-green-border: #cde8c8;
+        --action-edit: #28a745; /* Đã đổi từ màu cũ sang xanh lá */
+    }
+
+    body {
+        background-color: var(--background-color);
+        font-family: "Segoe UI", sans-serif;
+    }
+
+    /* Buttons */
+    .btn-xanhbo {
+        background-color: var(--primary-green-dark);
+        color: #fff;
+        border: none;
+        transition: 0.3s;
+        font-weight: 500;
+        border-radius: 6px;
+        padding: 8px 15px;
+        font-size: 14px;
+    }
+    .btn-xanhbo:hover {
+        background-color: #218838; /* Màu hover tối hơn một chút */
+        color: #fff;
+    }
+    .btn-action-blue {
+        background-color: var(--action-blue);
+        color: #fff;
+        border: none;
+        transition: 0.2s;
+        font-weight: 500;
+        border-radius: 6px;
+        padding: 8px 15px;
+        font-size: 14px;
+    }
+    .btn-action-blue:hover {
+        background-color: #0069d9;
+        color: #fff;
+    }
+
+    /* Filter Card (Sidebar bên trái) */
+    .filter-card {
+        background-color: #fff;
+        border-radius: 8px; 
+        box-shadow: 0 1px 6px var(--shadow-color);
+        padding: 18px;
+        border: 1px solid var(--border-color);
+    }
+    .filter-label {
+        font-weight: 600;
+        margin-bottom: 5px;
+        font-size: 14px;
+        color: #555;
+    }
+
+    /* Inputs */
+    .form-control, .form-select {
+        border-radius: 6px;
+        font-size: 14px;
+        border-color: var(--light-green-border);
+    }
+    .form-control:focus, .form-select:focus {
+        box-shadow: 0 0 0 0.15rem rgba(40, 167, 69, 0.25);
+        border-color: var(--primary-green-dark);
+    }
+
+    /* Action Bar (Thanh tìm kiếm bên phải) */
+    .action-bar {
+        background-color: #fff;
+        padding: 12px 16px;
+        border-radius: 8px; 
+        box-shadow: 0 1px 6px var(--shadow-color);
+        border: 1px solid var(--border-color);
+    }
+
+    /* Table */
+    .table-responsive {
+        border-radius: 8px;
+        overflow: hidden; 
+        border: 1px solid var(--border-color);
+    }
+    .table th {
+        background-color: var(--table-header-bg) !important;
+        color: var(--table-header-color);
+        font-weight: 600;
+        font-size: 13px; 
+        border-bottom: 2px solid #ddd !important;
+        border-top: none !important;
+        padding: 10px 8px;
+    }
+    .table td {
+        font-size: 13px;
+        border-top: 1px solid #f0f0f0;
+        vertical-align: middle;
+        padding: 8px;
+    }
+    .table-hover > tbody > tr:hover {
+        background-color: #f5fff5; 
+    }
+
+    /* Pagination */
+    .dataTables_paginate .paginate_button.current, 
+    .dataTables_paginate .paginate_button.current:hover {
+        background: var(--action-blue) !important; 
+        color: white !important;
+        border-color: var(--action-blue) !important;
+        border-radius: 4px;
+    }
+    .dataTables_paginate .paginate_button {
+        border-radius: 4px;
+        padding: 5px 10px;
+    }
+
+    /* Modal Headers */
+    /* Áp dụng màu xanh cho cả 2 modal */
+    #newProductModal .modal-header,
+    #editItemModal .modal-header {
+        background-color: var(--primary-green-dark) !important;
+        color: white;
+    }
+    .btn-close-white {
+        filter: invert(1) grayscale(100%) brightness(200%);
+    }
+    
+    /* Badges */
+    .badge-xedien { 
+        background-color: var(--primary-green-dark); 
+        color: white; 
+        padding: 5px 8px; 
+        border-radius: 4px; 
+    }
+    /* Đã đổi badge linh kiện sang xanh lá */
+    .badge-linhkien { 
+        background-color: var(--primary-green-dark); 
+        color: white; 
+        padding: 5px 8px; 
+        border-radius: 4px; 
+    }
+</style>
+
+<div class="container-fluid mt-4">
+    <div class="row g-4">
+        <div class="col-lg-3">
+            <div class="filter-card">
+                <h5 class="mb-3 text-success fw-bold"><i class="fa-solid fa-filter"></i> Bộ lọc Hàng hóa</h5>
+
+                <div class="mb-3">
+                    <label class="filter-label" for="typeFilter">Loại hàng hóa</label>
+                    <select id="typeFilter" class="form-select">
+                        <option value="">Tất cả loại hàng</option>
+                        <option value="Xe điện">Xe điện</option>
+                        <option value="Xe đạp điện">Xe đạp điện</option>
+                        <option value="Linh kiện">Linh kiện</option>
+                        <option value="Xe máy điện">Xe máy điện</option>
+                        <option value="Xe tay ga">Xe tay ga</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="filter-label" for="stockFilter">Tồn kho</label>
+                    <select id="stockFilter" class="form-select">
+                        <option value="">Tất cả tồn kho</option>
+                        <option value="available">Còn hàng</option>
+                        <option value="outOfStock">Hết hàng</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-9">
+            <h4 class="fw-bold text-success mb-3">
+                <i class="fa-solid fa-boxes-stacked"></i> Danh sách hàng hóa
+            </h4>
+
+            <div class="action-bar mb-3 d-flex justify-content-between flex-wrap align-items-center">
+                <input type="text" id="globalSearchBox" class="form-control me-2" placeholder="🔍 Tìm theo mã, tên hàng hóa..." style="width: 300px;">
+                
+                <div class="d-flex align-items-center gap-2 mt-2 mt-md-0">
+                    <button class="btn btn-xanhbo" data-bs-toggle="modal" data-bs-target="#newProductModal">
+                        <i class="fa fa-plus"></i> Tạo mới
+                    </button>
+                    <button class="btn btn-action-blue" onclick="alert('Chức năng Xuất file chưa được lập trình.');">
+                        <i class="fa-solid fa-file-export"></i> Xuất file
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table id="productTable" class="table table-hover bg-white" style="width:100%">
+                    <thead class="text-center">
+                        <tr>
+                            
+                            <th>Mã hàng</th>
+                            <th>Tên hàng</th>
+                            <th>Loại hàng</th>
+                            <th>Giá bán</th>
+                            <th>Giá vốn</th>
+                            <th>Tồn kho</th>
+                            <th>Thời gian tạo</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-center">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="newProductModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fa fa-plus"></i> Thêm Hàng Hóa Mới</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="formAdd">
+            <label class="form-label">Mã hàng (Để trống tự tạo)</label>
+            <input class="form-control mb-2" name="MaHang" />
+            
+            <label class="form-label">Tên hàng <span class="text-danger">*</span></label>
+            <input class="form-control mb-2" name="TenHang" required />
+            
+            <label class="form-label">Loại hàng</label>
+            <select class="form-select mb-2" name="LoaiHang">
+                <option value="Xe điện">Xe điện</option>
+                <option value="Xe đạp điện">Xe đạp điện</option>
+                <option value="Linh kiện">Linh kiện</option>
+                <option value="Xe máy điện">Xe máy điện</option>
+                <option value="Xe tay ga">Xe tay ga</option>
+            </select>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label">Giá bán (₫)</label>
+                    <input class="form-control mb-2" name="GiaBan" type="number" value="0" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Giá vốn (₫)</label>
+                    <input class="form-control mb-2" name="GiaVon" type="number" value="0" />
+                </div>
+            </div>
+            
+            <label class="form-label">Tồn kho ban đầu</label>
+            <input class="form-control mb-2" name="TonKho" type="number" value="0" />
+            
+            <label class="form-label">Khách đặt</label>
+            <input class="form-control mb-2" name="KhachDat" type="number" value="0" />
+            
+            <label class="form-label">Ghi chú</label>
+            <input class="form-control mb-2" name="GhiChu" />
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+        <button type="button" class="btn btn-xanhbo" onclick="handleNewProductSubmit()">Lưu Hàng Hóa</button> 
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="editItemModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fa-solid fa-pen-to-square"></i> Chỉnh sửa Hàng hóa</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <form id="formEdit">
+          <input type="hidden" id="editMaHang">
+
+          <label class="form-label mt-2">Tên hàng</label>
+          <input class="form-control" id="editTenHang">
+
+          <label class="form-label mt-2">Loại hàng</label>
+          <select class="form-select" id="editLoaiHang">
+              <option value="Xe điện">Xe điện</option>
+              <option value="Xe đạp điện">Xe đạp điện</option>
+                <option value="Linh kiện">Linh kiện</option>
+                <option value="Xe máy điện">Xe máy điện</option>
+                <option value="Xe tay ga">Xe tay ga</option>
+          </select>
+
+          <label class="form-label mt-2">Giá bán</label>
+          <input class="form-control" id="editGiaBan" type="number">
+
+          <label class="form-label mt-2">Giá vốn</label>
+          <input class="form-control" id="editGiaVon" type="number">
+
+          <label class="form-label mt-2">Tồn kho</label>
+          <input class="form-control" id="editTonKho" type="number">
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+        <button class="btn btn-xanhbo" onclick="submitEdit()">Lưu thay đổi</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    var table;
+    const TYPE_COL = 0, CODE_COL = 1, SELL_PRICE_COL = 3, COST_PRICE_COL = 4, STOCK_COL = 5, ACTION_COL = 7;
+
+    // Format tiền tệ Việt Nam
+    function formatCurrency(number){
+        const num = parseInt(number) || 0;
+        return new Intl.NumberFormat('vi-VN',{style:'currency',currency:'VND',minimumFractionDigits:0}).format(num).replace('₫', 'đ');
+    }
+
+    // 1. Thêm mới hàng hóa
+    function handleNewProductSubmit(){
+        const tenHang = $('input[name="TenHang"]').val().trim();
+        if(!tenHang){ alert('Vui lòng nhập Tên hàng hóa.'); return; }
+
+        var data = {
+            MaHang: $('input[name="MaHang"]').val().trim(),
+            TenHang: tenHang,
+            LoaiHang: $('select[name="LoaiHang"]').val(),
+            GiaBan: parseInt($('input[name="GiaBan"]').val()) || 0,
+            GiaVon: parseInt($('input[name="GiaVon"]').val()) || 0,
+            TonKho: parseInt($('input[name="TonKho"]').val()) || 0,
+            KhachDat: parseInt($('input[name="KhachDat"]').val()) || 0,
+            GhiChu: $('input[name="GhiChu"]').val()
+        };
+
+        $.ajax({
+            url: '/HangHoa/Create',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function(res){
+                if(res.success) {
+                    table.ajax.reload(null, false);
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('newProductModal'));
+                    modal.hide();
+                    $('#formAdd')[0].reset();
+                    alert(`Đã thêm hàng hóa "${tenHang}" thành công!`);
+                }
+                else alert("Thêm hàng hóa thất bại! Lỗi: " + (res.message || 'Không rõ.'));
+            },
+            error: function(xhr){
+                console.error("Lỗi AJAX:", xhr.responseText);
+                alert('Có lỗi Server khi thêm hàng hóa.');
+            }
+        });
+    }
+
+    // 2. Mở Modal Chỉnh sửa
+    function openEditModal(maHang){
+        $.ajax({
+            url: '/HangHoa/GetById?ma=' + maHang,
+            type: 'GET',
+            success: function(res){
+                $('#editMaHang').val(res.maHang);
+                $('#editTenHang').val(res.tenHang);
+                $('#editLoaiHang').val(res.loaiHang);
+                $('#editGiaBan').val(res.giaBan);
+                $('#editGiaVon').val(res.giaVon);
+                $('#editTonKho').val(res.tonKho);
+                $('#editItemModal').modal('show');
+            }
+        });
+    }
+
+    // 3. Gửi dữ liệu Chỉnh sửa
+    function submitEdit(){
+        var data = {
+            MaHang: $('#editMaHang').val(),
+            TenHang: $('#editTenHang').val(),
+            LoaiHang: $('#editLoaiHang').val(),
+            GiaBan: parseInt($('#editGiaBan').val()) || 0,
+            GiaVon: parseInt($('#editGiaVon').val()) || 0,
+            TonKho: parseInt($('#editTonKho').val()) || 0
+        };
+
+        $.ajax({
+            url:'/HangHoa/EditAjax',
+            type:'POST',
+            contentType:'application/json',
+            data:JSON.stringify(data),
+            success:function(res){
+                if(res.success){
+                    $('#editItemModal').modal('hide');
+                    table.ajax.reload(null, false);
+                    alert("Cập nhật hàng hóa thành công!");
+                } else alert("Cập nhật thất bại!");
+            }
+        });
+    }
+
+    // 4. Xóa Hàng Hóa
+    function deleteProduct(maHang) {
+        if (!confirm(`Bạn có chắc chắn muốn xóa hàng hóa có Mã: ${maHang}? Thao tác này không thể hoàn tác.`)) {
+            return; 
+        }
+        $.ajax({
+            url: '/HangHoa/DeleteAjax',
+            type: 'POST', 
+            contentType: 'application/json',
+            data: JSON.stringify({ MaHang: maHang }), 
+            success: function(res) {
+                if (res.success) {
+                    alert(`Đã xóa hàng hóa [${maHang}] thành công khỏi hệ thống!`);
+                    table.ajax.reload(null, false);
+                } else {
+                    alert("Xóa hàng hóa thất bại! Lỗi: " + (res.message || 'Không rõ.'));
+                }
+            },
+            error: function(xhr) {
+                console.error("Lỗi AJAX khi xóa:", xhr.responseText);
+                alert('Có lỗi Server khi thực hiện xóa hàng hóa.');
+            }
+        });
+    }
+
+    $(document).ready(function(){
+        table = $('#productTable').DataTable({
+            ajax:{
+                url: "/HangHoa/GetAll",
+                dataSrc: "" 
+            },
+            columns:[
+                { data:"loaiHang", className:"text-center" }, 
+                { data:"maHang", className:"text-center" },
+                { data:"tenHang", className:"text-start" },
+                { data:"giaBan", className:"text-end" },
+                { data:"giaVon", className:"text-end" },
+                { data:"tonKho", className:"text-center" },
+                { data:"thoiGianTao", className:"text-center", 
+                    render: function(data){ 
+                        if (!data) return '';
+                        const date = new Date(data);
+                        if (isNaN(date.getTime())) return data; 
+                        return date.toLocaleDateString('vi-VN') + ' ' + date.toLocaleTimeString('vi-VN').substring(0,5); 
+                    } 
+                },
+                { data:"maHang", orderable:false, searchable:false, className:"text-center",
+                    render: function(d){
+                        // Nút Sửa đã chuyển sang class btn-xanhbo
+                        return `
+                             <div class="d-flex justify-content-center gap-2">
+                             <a href="javascript:void(0)" onclick="openEditModal('${d}')" class="btn btn-sm btn-xanhbo" title="Chỉnh sửa"><i class="fa-solid fa-pen-to-square"></i></a>
+                             <a href="javascript:void(0)" onclick="deleteProduct('${d}')" class="btn btn-sm btn-danger" title="Xóa hàng hóa"><i class="fa-solid fa-trash"></i></a>
+                             </div>
+                        `;
+                    }
+                }
+            ],
+            dom:'rtip',
+            order:[[STOCK_COL,'desc']],
+            language:{
+                  sProcessing:"Đang xử lý...",
+                  sLengthMenu:"Xem _MENU_ mục",
+                  sZeroRecords:"Không tìm thấy hàng hóa nào phù hợp",
+                  sInfo:"Hiển thị _START_ đến _END_ trong tổng số _TOTAL_ mục",
+                  sInfoEmpty:"Hiển thị 0 đến 0 trong tổng số 0 mục",
+                  sInfoFiltered:"(được lọc từ tổng số _MAX_ mục)",
+                  sSearch:"Tìm kiếm:",
+                  oPaginate:{ sFirst:"Đầu", sLast:"Cuối", sNext:"Tiếp", sPrevious:"Trước" }
+            },
+            columnDefs:[
+                {
+                    targets:TYPE_COL,
+                    render:function(data,type,row){
+                        if(type==='display'){
+                            // Badge đã dùng màu xanh lá
+                            let cls = (data==='Xe điện' || data==='Xe máy điện') ? 'badge-xedien':'badge-linhkien';
+                            return `<span class="badge ${cls}">${data}</span>`;
+                        }
+                        return data;
+                    }
+                },
+                {
+                    targets:[SELL_PRICE_COL,COST_PRICE_COL],
+                    render:function(data,type,row){
+                        return (type==='display'||type==='filter')?formatCurrency(data):parseInt(data)||0;
+                    },
+                    className:'text-end'
+                }
+            ]
+        });
+
+        // Event Handlers cho bộ lọc bên trái
+        $('#typeFilter').on('change',function(){
+            const val = $(this).val();
+            table.column(TYPE_COL).search(val?'^'+val+'$':'',true,false).draw();
+        });
+
+        $.fn.dataTable.ext.search.push(function(settings,data,index){
+            if(settings.nTable.id!=='productTable') return true;
+            const stockFilter=$('#stockFilter').val();
+            const stock=parseInt(data[STOCK_COL])||0;
+            if(stockFilter==='available') return stock>0;
+            if(stockFilter==='outOfStock') return stock<=0;
+            return true;
+        });
+        $('#stockFilter').on('change',()=>table.draw());
+
+        $('#globalSearchBox').on('keyup',function(){ table.search(this.value).draw(); });
+    });
+</script>

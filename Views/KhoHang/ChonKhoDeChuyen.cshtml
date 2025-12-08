@@ -1,0 +1,198 @@
+@{
+    ViewBag.Title = "Chọn kho để chuyển";
+    Layout = "/Views/Shared/_Layout.cshtml";
+    var primaryGreen = "#428446";
+}
+
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center p-3 rounded shadow-sm"
+             style="background-color: @primaryGreen; color: white;">
+            <h4 class="m-0 font-weight-bold"><i class="fas fa-warehouse mr-2"></i> Chọn kho để chuyển</h4>
+            <span>Chi nhánh: <strong>Admin</strong></span>
+        </div>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid py-3">
+        <div class="row g-3">
+            <!-- Bảng danh sách -->
+            <div class="col-lg-8 col-12">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body">
+                        <!-- Nút quay lại lên trên -->
+                        <div class="mb-3">
+                            <a href="/KhoHang/ChuyenKho" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Quay lại</a>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="card-title text-success fw-bold mb-0">Danh sách phiếu chuyển</h5>
+                            <div class="input-group" style="max-width: 400px;">
+                                <input type="text" class="form-control" placeholder="Tìm hàng hóa theo mã hoặc tên (F3)" id="searchInput">
+                                <button class="btn btn-light" id="btnSearch"><i class="bi bi-search"></i></button>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive text-center" style="min-height:300px;">
+                            <table class="table table-hover table-sm align-middle" id="transferTable">
+                                <thead class="table-light text-center">
+                                    <tr>
+                                        <th>STT</th>
+                                        <th>Mã hàng</th>
+                                        <th>Tên hàng</th>
+                                        <th>ĐVT</th>
+                                        <th>Tồn kho</th>
+                                        <th>Tồn kho nhận</th>
+                                        <th>SL chuyển</th>
+                                        <th>Thành tiền</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr id="emptyRow">
+                                        <td colspan="8" class="text-center py-5 text-muted">
+                                            Thêm sản phẩm từ file Excel<br />
+                                            <a href="#" class="text-decoration-none">Tải về file mẫu: Excel file</a><br /><br />
+                                            <button type="button" class="btn" style="background-color: @primaryGreen; color: white;" id="btnChooseFile">
+                                                <i class="bi bi-file-earmark-arrow-up"></i> Chọn file dữ liệu
+                                            </button>
+                                            <input type="file" id="fileInput" accept=".xlsx,.xls" style="display: none;" />
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form thao tác -->
+            <div class="col-lg-4 col-12">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body d-flex flex-column" style="height:100%;">
+                        <form class="flex-grow-1 d-flex flex-column">
+                            <div class="mb-3">
+                                <label class="form-label">Mã chuyển hàng</label>
+                                <input type="text" class="form-control" placeholder="Mã phiếu tự động" disabled>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Trạng thái</label>
+                                <input type="text" class="form-control" value="Phiếu tạm" disabled>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Tổng số lượng</label>
+                                <input type="text" class="form-control" value="0" disabled id="totalQuantity">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Chuyển tới</label>
+                                <select class="form-select">
+                                    <option>Chọn chi nhánh</option>
+                                    <option>Kho 1</option>
+                                    <option>Kho 2</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3 flex-grow-1">
+                                <label class="form-label"><i class="bi bi-pencil-square"></i> Ghi chú</label>
+                                <textarea class="form-control h-100" rows="4" placeholder="Nhập ghi chú..."></textarea>
+                            </div>
+
+                            <!-- Nút Lưu tạm và Hoàn thành với khoảng cách đều -->
+                            <div class="d-flex justify-content-between mt-3">
+    <button type="button" class="btn btn-success" style="width:48%;" id="btnSaveTemp">
+        <i class="bi bi-save"></i> Lưu tạm
+    </button>
+    <button type="submit" class="btn btn-success" style="width:48%;" id="btnComplete">
+        <i class="bi bi-check-lg"></i> Hoàn thành
+    </button>
+</div>
+
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- SheetJS để đọc file Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <script>
+        $(document).ready(function(){
+            // F3 focus input tìm kiếm
+            $(document).on('keydown', function(e){
+                if(e.key === 'F3'){
+                    e.preventDefault();
+                    $('#searchInput').focus();
+                }
+            });
+
+            // Nút search
+            $('#btnSearch').click(function(){
+                var keyword = $('#searchInput').val().toLowerCase();
+                $('#transferTable tbody tr').each(function(){
+                    if($(this).find('td:eq(1)').text().toLowerCase().includes(keyword)){
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+            });
+
+            // Nút chọn file Excel
+            $('#btnChooseFile').click(function(){
+                $('#fileInput').click();
+            });
+
+            // Khi chọn file
+            $('#fileInput').change(function(e){
+                var file = e.target.files[0];
+                if(!file) return;
+
+                var reader = new FileReader();
+                reader.onload = function(e){
+                    var data = new Uint8Array(e.target.result);
+                    var workbook = XLSX.read(data, {type: 'array'});
+                    var firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    var jsonData = XLSX.utils.sheet_to_json(firstSheet, {header:1});
+
+                    // Xóa dòng "emptyRow"
+                    $('#emptyRow').remove();
+
+                    // Thêm dữ liệu vào bảng
+                    var tbody = $('#transferTable tbody');
+                    tbody.empty();
+                    jsonData.forEach(function(row, index){
+                        if(index === 0) return; // bỏ header Excel
+                        tbody.append('<tr class="text-center">'+
+                            '<td>'+(index)+'</td>'+
+                            '<td>'+row[0]+'</td>'+
+                            '<td>'+row[1]+'</td>'+
+                            '<td>'+row[2]+'</td>'+
+                            '<td>'+row[3]+'</td>'+
+                            '<td>'+row[4]+'</td>'+
+                            '<td>'+row[5]+'</td>'+
+                            '<td>'+row[6]+'</td>'+
+                            '</tr>');
+                    });
+
+                    // Cập nhật tổng số lượng
+                    var totalQty = jsonData.slice(1).reduce(function(sum,row){ return sum + (parseInt(row[5])||0); },0);
+                    $('#totalQuantity').val(totalQty);
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        });
+    </script>
+}

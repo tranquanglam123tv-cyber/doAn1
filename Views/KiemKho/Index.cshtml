@@ -1,0 +1,193 @@
+@{
+    ViewBag.Title = "Phiếu kiểm kho";
+    Layout = "~/Views/Shared/_Layout.cshtml"; 
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3>Phiếu kiểm kho</h3>
+    <div>
+        <a href="@Url.Action("Create", "KiemKho")" class="btn btn-primary">+ Kiểm kho</a>
+        <button class="btn btn-outline-secondary" id="btnExport">Xuất file</button>
+        <button class="btn btn-light"><i class="bi bi-gear"></i></button>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Bộ lọc bên trái -->
+    <div class="col-md-3">
+        <div class="bg-white p-3 rounded shadow-sm">
+            <h6 class="fw-bold mb-3">Bộ lọc</h6>
+
+            <div class="mb-3 position-relative" style="z-index: 10;">
+                <label class="fw-semibold d-block mb-2">Ngày tạo</label>
+
+                <div>
+                    <input type="radio" id="thisMonth" name="dateType" checked />
+                    <label for="thisMonth" class="btn btn-outline-primary btn-sm active" id="btnThisMonth">
+                        Tháng này
+                    </label>
+
+                    <input type="radio" id="customDate" name="dateType" />
+                    <label for="customDate" class="btn btn-outline-secondary btn-sm" id="btnCustom">
+                        Tùy chỉnh
+                    </label>
+
+                    <input type="date" class="form-control mt-2 d-none" id="customDatePicker" />
+                </div>
+
+                <!-- Popup chọn thời gian -->
+                <div id="timeRangePopup" class="bg-white border rounded shadow p-3 mt-2 position-absolute"
+                     style="display:none; width: 600px;">
+                    <div class="d-flex justify-content-between flex-wrap">
+                        <div>
+                            <h6 class="fw-bold">Theo ngày</h6>
+                            <button class="btn btn-light btn-sm">Hôm nay</button>
+                            <button class="btn btn-light btn-sm">Hôm qua</button>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold">Theo tuần</h6>
+                            <button class="btn btn-light btn-sm">Tuần này</button>
+                            <button class="btn btn-light btn-sm">Tuần trước</button>
+                            <button class="btn btn-light btn-sm">7 ngày qua</button>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold">Theo tháng</h6>
+                            <button class="btn btn-primary btn-sm">Tháng này</button>
+                            <button class="btn btn-light btn-sm">Tháng trước</button>
+                            <button class="btn btn-light btn-sm">30 ngày qua</button>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold">Theo quý</h6>
+                            <button class="btn btn-light btn-sm">Quý này</button>
+                            <button class="btn btn-light btn-sm">Quý trước</button>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold">Theo năm</h6>
+                            <button class="btn btn-light btn-sm">Năm nay</button>
+                            <button class="btn btn-light btn-sm">Năm trước</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="fw-semibold">Trạng thái</label><br />
+                <input type="checkbox" checked /> Phiếu tạm <br />
+                <input type="checkbox" checked /> Đã cân bằng kho <br />
+                <input type="checkbox" /> Đã hủy
+            </div>
+
+            <div class="mb-3">
+                <label class="fw-semibold">Người tạo</label>
+                <select class="form-select">
+                    <option>Chọn người tạo</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Danh sách phiếu -->
+    <div class="col-md-9">
+        <div class="bg-white p-3 rounded shadow-sm">
+            <table class="table table-bordered align-middle">
+                <thead class="table-light fw-semibold">
+                    <tr>
+                        <th>Mã kiểm kho</th>
+                        <th>Thời gian</th>
+                        <th>Ngày cân bằng</th>
+                        <th>SL thực tế</th>
+                        <th>Tổng thực tế</th>
+                        <th>Tổng chênh lệch</th>
+                        <th>SL lệch tăng</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-5">
+                            <div>
+                                <img src="https://cdn-icons-png.flaticon.com/512/4076/4076505.png" width="60" alt="no-data" />
+                                <p class="mt-3 fw-bold mb-1">Không tìm thấy kết quả</p>
+                                <p class="text-secondary mb-0">
+                                    Không tìm thấy giao dịch nào phù hợp trong tháng này.<br />
+                                    Nhấn <a href="#">vào đây</a> để tiếp tục tìm kiếm.
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const btnThisMonth = document.getElementById('btnThisMonth');
+    const popup = document.getElementById('timeRangePopup');
+    const customDatePicker = document.getElementById('customDatePicker');
+    const customRadio = document.getElementById('customDate');
+    const thisMonthRadio = document.getElementById('thisMonth');
+    const btnCustom = document.getElementById('btnCustom');
+
+    // 🟦 Mở / đóng popup khi bấm "Tháng này"
+    btnThisMonth.addEventListener('click', function (e) {
+        e.preventDefault();
+        if (thisMonthRadio.checked) {
+            popup.style.display = (popup.style.display === 'none' || popup.style.display === '') ? 'block' : 'none';
+        }
+    });
+
+    // 🟥 Click ra ngoài thì ẩn popup
+    document.addEventListener('click', function (e) {
+        if (!popup.contains(e.target) && e.target !== btnThisMonth) {
+            popup.style.display = 'none';
+        }
+    });
+
+    // 🟨 Khi chọn "Tùy chỉnh"
+    customRadio.addEventListener('change', function () {
+        customDatePicker.classList.remove('d-none');
+        btnCustom.classList.add('btn-primary', 'active');
+        btnCustom.classList.remove('btn-outline-secondary');
+        btnThisMonth.classList.remove('btn-primary', 'active');
+        btnThisMonth.classList.add('btn-outline-secondary');
+    });
+
+    // 🟩 Khi chọn "Tháng này"
+    thisMonthRadio.addEventListener('change', function () {
+        customDatePicker.classList.add('d-none');
+        btnThisMonth.classList.add('btn-primary', 'active');
+        btnThisMonth.classList.remove('btn-outline-secondary');
+        btnCustom.classList.remove('btn-primary', 'active');
+        btnCustom.classList.add('btn-outline-secondary');
+    });
+
+    // 🟧 Xử lý click chọn trong popup
+    const timeButtons = popup.querySelectorAll('button.btn');
+    timeButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Xóa màu ở tất cả nút
+            timeButtons.forEach(b => b.classList.remove('btn-primary'));
+            // Đánh dấu nút hiện tại
+            btn.classList.add('btn-primary');
+
+            // Cập nhật text của nút chính
+            btnThisMonth.textContent = btn.textContent.trim();
+
+            // Chuyển về radio "Tháng này"
+            thisMonthRadio.checked = true;
+            thisMonthRadio.dispatchEvent(new Event('change'));
+
+            // Đóng popup
+            popup.style.display = 'none';
+        });
+    });
+});
+</script>
+}
+<script>
+    document.getElementById("btnExport").addEventListener("click", function () {
+        window.location.href = '@Url.Action("ExportToExcel", "KiemKho")';
+    });
+</script>

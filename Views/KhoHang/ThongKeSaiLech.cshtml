@@ -1,0 +1,364 @@
+@{
+    ViewBag.Title = "Thống kê sai lệch kho";
+    Layout = "/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    /* --- 1. CSS GIAO DIỆN CHUNG (HEADER, SIDEBAR, BUTTONS) --- */
+    .app-header {
+        background-color: #28a745; 
+        color: white;
+        padding: 10px 20px;
+        display: flex;
+        justify-content: space-between; 
+        align-items: center;
+        position: sticky; top: 0; z-index: 1000;}
+    .app-header .btn-header-group { display: flex; align-items: center; }
+    .app-header .btn-white-green-text {
+        color: #28a745 !important; background-color: white !important;
+        border: 1px solid white !important; font-weight: bold;
+        margin-left: 5px; padding: 0.25rem 0.5rem; font-size: 0.8rem;
+        display: inline-flex; align-items: center; justify-content: center;
+    }
+
+    /* Badge chọn trạng thái */
+    #trangThaiContainer { display: flex; flex-wrap: wrap; gap: 5px; }
+    .selectable-badge {
+        display: flex; align-items: center; justify-content: center;
+        width: auto !important; flex-grow: 1; height: 35px; padding: 0 10px;
+        cursor: pointer; transition: all 0.2s ease-in-out; white-space: nowrap; 
+        background-color: white !important; color: #212529 !important; 
+        border: 1px solid #28a745; border-radius: 4px; font-size: 13px;
+    }
+    .selectable-badge:hover { background-color: #f1f8f2 !important; }
+    .selectable-badge.active-status {
+        background-color: #28a745 !important; color: white !important;
+        font-weight: bold; border-color: #28a745;
+        box-shadow: 0 0 5px rgba(40, 167, 69, 0.5); 
+    }
+
+    /* Nút bấm & Ô tìm kiếm thẳng hàng */
+    .action-buttons { display: flex; align-items: center; gap: 5px; height: 100%; }
+    .action-buttons .btn {
+        white-space: nowrap !important; height: 38px;
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 90px; font-weight: 600; border-radius: 5px; padding: 0 12px;
+    }
+    #searchInput { height: 38px; }
+    .input-group-append .btn {
+        height: 38px; display: flex; align-items: center; justify-content: center;
+        padding-top: 0; padding-bottom: 0;
+    }
+
+    /* Responsive */
+    @@media (max-width: 767.98px) {
+        .app-header h4 { max-width: 50%; font-size: 1.1rem; }
+        .app-header .btn-header-group { overflow-x: auto; white-space: nowrap; justify-content: flex-end; }
+        .action-buttons .btn { font-size: 0.8rem; padding: 0 8px; }
+    }
+    @@media (min-width: 768px) { .app-header { display: none !important; } }
+
+    /* In ấn: Ẩn menu, hiện bảng */
+    @@media print {
+        .app-header, .main-sidebar, .main-header, .action-buttons, #filterCollapseContent, #searchBtn, #searchInput, .main-footer {
+            display: none !important;
+        }
+        .content-wrapper { margin-left: 0 !important; padding-top: 0 !important; }
+        .card { box-shadow: none !important; border: 1px solid #ddd !important; }
+    }
+</style>
+
+<div class="app-header">
+    <h4 class="m-0 font-weight-bold"><i class="fas fa-chart-bar mr-2"></i> Thống kê</h4>
+    <div class="btn-header-group d-flex d-md-none">
+        <button class="btn btn-white-green-text" id="btnPrintMobile"><i class="fas fa-print"></i></button>
+        <button class="btn btn-white-green-text" id="btnExportMobile"><i class="fas fa-file-excel"></i></button>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid pt-3">
+        <div class="row">
+            <div class="col-12 col-md-3 mb-3 collapse d-md-block" id="filterCollapseContent">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body">
+                        <h5 class="font-weight-bold mb-3 text-dark">Bộ lọc sai lệch</h5>
+
+                        <div class="mb-3">
+                            <label class="form-label font-weight-bold text-dark">Kho hàng</label>
+                            <select class="form-control" id="khoFilter">
+                                <option value="Tất cả">Tất cả</option>
+                                <option value="Kho chính">Kho chính</option>
+                                <option value="Kho chi nhánh">Kho chi nhánh</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label font-weight-bold text-dark">Trạng thái</label>
+                            <div id="trangThaiContainer">
+                                <span class="selectable-badge active-status" data-status="Tất cả">Tất cả</span>
+                                <span class="selectable-badge" data-status="Có sai lệch">Có sai lệch</span>
+                                <span class="selectable-badge" data-status="Không sai lệch">Không sai lệch</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label font-weight-bold text-dark">Thời gian kiểm kê</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="thoigian" id="thangnay" value="month" checked>
+                                <label class="form-check-label text-dark" for="thangnay">Tháng này</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="thoigian" id="tuychinh" value="custom">
+                                <label class="form-check-label text-dark" for="tuychinh">Tùy chỉnh</label>
+                            </div>
+                            <input type="date" class="form-control" id="dateFilter" style="display:none;" /> 
+                        </div>
+
+                        <button class="btn btn-success btn-block font-weight-bold mt-3" id="btnMobileFilter">
+                            <i class="fas fa-filter"></i> Áp dụng bộ lọc
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-9">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="input-group flex-grow-1 mr-2">
+                        <input type="text" class="form-control" id="searchInput" placeholder="Tìm theo mã, tên hàng..." />
+                        <div class="input-group-append">
+                            <button class="btn btn-success"><i class="fas fa-search"></i></button>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-outline-secondary d-md-none" type="button" data-toggle="collapse" data-target="#filterCollapseContent">
+                        <i class="fas fa-filter"></i> 
+                    </button>
+                    
+                    <div class="ml-auto d-none d-md-flex action-buttons">
+                        <button class="btn btn-success font-weight-bold" id="btnPrint">
+                            <i class="fas fa-print mr-1"></i> In báo cáo
+                        </button>
+                        <button class="btn btn-outline-success" id="btnExport">
+                            <i class="fas fa-file-excel mr-1"></i> Xuất Excel
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 mb-3">
+                    <div class="card-header bg-success text-white">
+                        Biểu đồ sai lệch tồn kho
+                    </div>
+                    <div class="card-body">
+                        <canvas id="chartSaiLech" height="100"></canvas>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-success text-white fw-bold">
+                        Danh sách chi tiết
+                    </div>
+                    <div class="card-body p-0 table-responsive">
+                        <table class="table table-hover align-middle mb-0 text-center" id="saiLechTable">
+                            <thead class="bg-success text-white">
+                                <tr>
+                                    <th>Mã hàng</th>
+                                    <th>Tên hàng hóa</th>
+                                    <th>Tồn hệ thống</th>
+                                    <th>Tồn thực tế</th>
+                                    <th>Chênh lệch</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr data-kho="Kho chính" data-ngay="2025-11-20">
+                                    <td>HH001</td>
+                                    <td class="text-left">Pin Lithium 60V</td>
+                                    <td>120</td>
+                                    <td>118</td>
+                                    <td class="text-danger fw-bold">-2</td> 
+                                </tr>
+                                <tr data-kho="Kho chi nhánh" data-ngay="2025-11-20">
+                                    <td>HH002</td>
+                                    <td class="text-left">Yadea G5</td>
+                                    <td>30</td>
+                                    <td>30</td>
+                                    <td class="text-success fw-bold">0</td> 
+                                </tr>
+                                <tr data-kho="Kho chính" data-ngay="2025-11-19">
+                                    <td>HH003</td>
+                                    <td class="text-left">Đèn pha LED</td>
+                                    <td>45</td>
+                                    <td>50</td>
+                                    <td class="text-primary fw-bold">+5</td> 
+                                </tr>
+                                <tr data-kho="Kho chi nhánh" data-ngay="2025-11-19">
+                                    <td>HH004</td>
+                                    <td class="text-left">Khung xe điện</td>
+                                    <td>80</td>
+                                    <td>75</td>
+                                    <td class="text-danger fw-bold">-5</td> 
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-center py-5 text-muted" id="noResults" style="display:none;">
+                        <i class="fas fa-inbox fa-3x text-secondary"></i>
+                        <p class="mt-2">Không tìm thấy dữ liệu phù hợp</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            // --- 1. KHỞI TẠO BIỂU ĐỒ TRỐNG ---
+            const ctx = document.getElementById('chartSaiLech').getContext('2d');
+            let chartSaiLech = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [], 
+                    datasets: [{
+                        label: 'Chênh lệch',
+                        data: [], 
+                        backgroundColor: [],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: { label: function (context) { return 'Sai lệch: ' + context.raw; } }
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: 'Số lượng' } },
+                        x: { title: { display: true, text: 'Hàng hóa' } }
+                    }
+                }
+            });
+
+            // --- 2. HÀM XỬ LÝ CHÍNH: LỌC + TÌM KIẾM + CẬP NHẬT CHART ---
+            function updateView() {
+                var kho = $('#khoFilter').val();
+                var trangThai = $('.selectable-badge.active-status').data('status');
+                var timeType = $('input[name="thoigian"]:checked').val();
+                var selectedDate = $('#dateFilter').val();
+                var keyword = $('#searchInput').val().toLowerCase().trim();
+
+                var now = new Date();
+                var hasRow = false;
+                
+                var chartLabels = [];
+                var chartData = [];
+                var chartColors = [];
+
+                $('#saiLechTable tbody tr').each(function () {
+                    var row = $(this);
+                    var showRow = true;
+
+                    // A. LỌC THEO SIDEBAR
+                    var rowKho = row.data('kho');
+                    var rowDateStr = row.data('ngay');
+                    var chenhLechText = row.find('td:last').text().trim();
+                    var chenhLech = parseFloat(chenhLechText.replace(/[+-]/g, ''));
+                    var isSaiLech = chenhLech !== 0;
+
+                    if (trangThai === "Có sai lệch" && !isSaiLech) showRow = false;
+                    else if (trangThai === "Không sai lệch" && isSaiLech) showRow = false;
+
+                    if (kho !== "Tất cả" && rowKho !== kho) showRow = false;
+
+                    if (showRow && rowDateStr) {
+                        var rDate = new Date(rowDateStr);
+                        if (timeType === 'month') {
+                            if (rDate.getMonth() !== now.getMonth() || rDate.getFullYear() !== now.getFullYear()) showRow = false;
+                        } else if (timeType === 'custom' && selectedDate) {
+                            if (rowDateStr !== selectedDate) showRow = false;
+                        }
+                    }
+
+                    // B. LỌC THEO TỪ KHÓA
+                    if (showRow && keyword !== "") {
+                        var textMa = row.find('td:eq(0)').text().toLowerCase();
+                        var textTen = row.find('td:eq(1)').text().toLowerCase();
+                        if (textMa.indexOf(keyword) === -1 && textTen.indexOf(keyword) === -1) {
+                            showRow = false;
+                        }
+                    }
+
+                    // C. HIỂN THỊ VÀ CẬP NHẬT CHART
+                    if(showRow) {
+                        row.show();
+                        hasRow = true;
+
+                        var tenHang = row.find('td:eq(1)').text();
+                        chartLabels.push(tenHang);
+                        chartData.push(chenhLech);
+                        
+                        if(chenhLech < 0) chartColors.push('rgba(220, 53, 69, 0.7)');
+                        else if(chenhLech > 0) chartColors.push('rgba(40, 167, 69, 0.7)');
+                        else chartColors.push('rgba(108, 117, 125, 0.5)');
+                    } else {
+                        row.hide();
+                    }
+                });
+
+                chartSaiLech.data.labels = chartLabels;
+                chartSaiLech.data.datasets[0].data = chartData;
+                chartSaiLech.data.datasets[0].backgroundColor = chartColors;
+                chartSaiLech.update();
+
+                if(hasRow) $('#noResults').hide();
+                else $('#noResults').show();
+            }
+
+            // --- 3. GẮN SỰ KIỆN (EVENTS) ---
+            
+            // Xử lý nút In & Xuất Excel (Cả Desktop & Mobile)
+            $('#btnPrint, #btnPrintMobile').click(function() { window.print(); });
+            
+            $('#btnExport, #btnExportMobile').click(function() {
+                var html = document.getElementById("saiLechTable").outerHTML;
+                var blob = new Blob(['\ufeff', html], { type: 'application/vnd.ms-excel' });
+                var url = URL.createObjectURL(blob);
+                var link = document.createElement("a");
+                link.download = "ThongKeSaiLech.xls";
+                link.href = url;
+                link.click();
+            });
+
+            $('#searchInput').on('keyup', function() { updateView(); });
+            $('#khoFilter').change(function() { updateView(); });
+            
+            $('.selectable-badge').click(function () {
+                $('.selectable-badge').removeClass('active-status');
+                $(this).addClass('active-status');
+                updateView();
+            });
+
+            $('#dateFilter').change(function() { updateView(); });
+            $('input[name="thoigian"]').change(function () {
+                if ($(this).val() === 'custom') $('#dateFilter').slideDown();
+                else { $('#dateFilter').slideUp(); $('#dateFilter').val(''); }
+                updateView();
+            });
+
+            $('#btnMobileFilter').click(function() {
+                if ($(window).width() < 768) $('#filterCollapseContent').collapse('hide');
+                updateView();
+            });
+
+            // Chạy lần đầu
+            $('#dateFilter').hide();
+            updateView();
+        });
+    </script>
+}

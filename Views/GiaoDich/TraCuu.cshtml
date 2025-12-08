@@ -1,0 +1,543 @@
+@{
+    ViewBag.Title = "Tra cứu lịch sử giao dịch";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    /* --- 1. BASE STYLE (GIỐNG TRANG XUẤT) --- */
+    .bg-ebike { background: #28a745 !important; color: white; }
+    .text-ebike { color: #28a745 !important; }
+    
+    /* --- 2. BẢNG HÀNG HÓA --- */
+    .table-input { 
+        width: 100%; border: 1px solid #dee2e6; padding: 6px 8px; 
+        border-radius: 4px; text-align: right; font-weight: 600; color: #495057;
+    }
+    .table-input:focus { outline: none; border-color: #28a745; }
+    .table-input[readonly] { background-color: transparent; border: none; font-weight: 700; color: #212529; padding: 0; }
+
+    /* --- 3. CỘT PHẢI (SUMMARY BOX) --- */
+    .summary-card {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+        background-color: #fff;
+        overflow: hidden;
+    }
+    
+    .summary-header {
+        background-color: #28a745;
+        color: white;
+        padding: 12px 20px;
+        font-weight: bold;
+        display: flex; align-items: center;
+    }
+
+    .summary-body { padding: 20px; }
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        font-size: 0.95rem;
+        color: #6c757d;
+    }
+    
+    .summary-row strong { color: #343a40; font-size: 1rem; }
+
+    /* Ô NHẬP GIẢM GIÁ (ĐỒNG BỘ) */
+    .discount-input-wrapper {
+        position: relative;
+        width: 140px;
+    }
+    .discount-input-wrapper input {
+        width: 100%;
+        padding: 6px 30px 6px 10px;
+        text-align: right;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        color: #dc3545;
+        font-weight: 600;
+    }
+    .discount-input-wrapper input:focus {
+        border-color: #dc3545;
+        outline: none;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15);
+    }
+    .discount-symbol {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+        font-size: 0.9rem;
+        text-decoration: underline;
+        pointer-events: none;
+    }
+
+    /* TỔNG TIỀN CẦN TRẢ */
+    .final-total-box {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 15px;
+        text-align: right;
+        border: 1px solid #e9ecef;
+    }
+    .final-label { display: block; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; color: #6c757d; margin-bottom: 5px; font-weight: 700; }
+    .final-value { font-size: 1.8rem; color: #dc3545; font-weight: 800; line-height: 1; }
+
+    /* NÚT BẤM (ĐỒNG BỘ) */
+    .btn-hoan-tat {
+        background-color: #28a745;
+        color: white;
+        font-weight: 600;
+        border: none;
+        padding: 10px;
+        border-radius: 6px;
+        width: 100%;
+        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        text-transform: uppercase;
+    }
+    .btn-hoan-tat:hover { background-color: #218838; color: white; box-shadow: 0 4px 8px rgba(40, 167, 69, 0.2); }
+
+    .btn-luu-nhap {
+        background-color: white;
+        color: #0d6efd;
+        border: 1px solid #0d6efd;
+        font-weight: 600;
+        padding: 8px;
+        border-radius: 6px;
+        width: 100%;
+        display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .btn-luu-nhap:hover { background-color: #f0f8ff; }
+
+    .btn-huy {
+        background-color: white;
+        color: #6c757d;
+        border: 1px solid #ced4da;
+        font-weight: 600;
+        padding: 8px;
+        border-radius: 6px;
+        width: 100%;
+        display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+        text-decoration: none;
+    }
+    .btn-huy:hover { background-color: #f8f9fa; color: #495057; }
+    
+    /* Search Input */
+    .search-box { border-radius: 50px; padding-left: 20px; border: 1px solid #e9ecef; background: #f8f9fa; }
+    .search-box:focus { background: #fff; border-color: #28a745; box-shadow: 0 0 0 4px rgba(40, 167, 69, 0.1); }
+
+    /* Thêm style cho nút Hành động (MỚI) */
+    .btn-action-group {
+        display: flex;
+        gap: 5px; /* Khoảng cách giữa các nút Sửa/Xóa */
+        justify-content: center;
+    }
+    .btn-action {
+        padding: 5px 10px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+</style>
+
+@{
+    // Helper function để format số tiền
+    string FormatCurrency(decimal value)
+    {
+        // Thêm định dạng tiền tệ Việt Nam (Ví dụ: 32,500,000 ₫)
+        return $"{value.ToString("#,##0")} ₫";
+    }
+}
+
+
+<div class="app-header">
+    <h4 class="m-0 font-weight-bold"><i class="fas fa-history mr-2"></i> Tra cứu lịch sử giao dịch</h4>
+
+    <div class="btn-header-group d-flex d-md-none">
+        <button class="btn btn-white-green-text">
+            <i class="fas fa-download"></i>
+        </button>
+        <button class="btn btn-white-green-text">
+            <i class="fas fa-cog"></i>
+        </button>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid pt-3">
+        <div class="row">
+            <div class="col-12 col-md-3 mb-3 collapse d-md-block" id="filterCollapseContent">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body">
+                        <h5 class="font-weight-bold mb-3 text-dark">Bộ lọc lịch sử giao dịch</h5>
+                        
+                        <div class="mb-3">
+                            <label class="form-label font-weight-bold text-dark">Loại giao dịch</label>
+                            <select class="form-control" id="loaiGiaoDichFilter">
+                                <option value="">Tất cả</option>
+                                <option value="Tạo Đặt Hàng Nhập">Tạo Đặt Hàng Nhập</option> 
+                                <option value="Nhập hàng">Nhập hàng</option>
+                                <option value="Xuất hàng">Xuất hàng</option>
+                                <option value="Trả NCC">Trả NCC</option>
+                                <option value="Bán lẻ">Bán lẻ</option>
+                                <option value="Chuyển kho">Chuyển kho</option>
+                            </select>
+                        </div>
+
+
+                        <div class="mb-3">
+                            <label class="form-label font-weight-bold text-dark">Thời gian</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="thoigian" id="thangnay" value="month" checked>
+                                <label class="form-check-label text-dark" for="thangnay">Tháng này</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="thoigian" id="tuychinh" value="custom">
+                                <label class="form-check-label text-dark" for="tuychinh">Tùy chỉnh</label>
+                            </div>
+                            <input type="date" class="form-control" id="dateFilter" style="display:none;" /> 
+                        </div>
+
+
+                        <button class="btn btn-success btn-block font-weight-bold mt-3" id="applyFilter">
+                            <i class="fas fa-filter"></i> Áp dụng bộ lọc
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-9">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="input-group flex-grow-1 mr-2">
+                        <input type="text" class="form-control search-box" id="searchInput" placeholder="Tìm theo mã hoặc tên NCC..." />
+                        <div class="input-group-append">
+                            <button class="btn btn-success" id="searchBtn"><i class="fas fa-search"></i></button>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-outline-secondary d-md-none" 
+                            type="button" 
+                            data-toggle="collapse" 
+                            data-target="#filterCollapseContent"
+                            aria-expanded="false" 
+                            aria-controls="filterCollapseContent">
+                        <i class="fas fa-filter"></i> 
+                    </button>
+
+                    <div class="ml-auto d-none d-md-flex">
+                        <button class="btn btn-success font-weight-bold mr-2">
+                            <i class="fas fa-download"></i> Xuất file
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0">
+                    <div class="card-header font-weight-bold bg-success text-white">
+                        Lịch sử giao dịch
+                    </div>
+                    <div class="card-body p-0 table-responsive">
+                        <table class="table table-hover align-middle mb-0 text-center" id="lichSuGiaoDichTable">
+                            <thead class="bg-success text-white">
+                                <tr>
+                                    <th><input type="checkbox" id="selectAll" /></th>
+                                    <th>Mã giao dịch</th>
+                                    <th>Loại giao dịch</th>
+                                    <th>Thời gian</th>
+                                    <th>Đối tác</th>
+                                    <th>Giá trị</th>
+                                    <th>Hành động</th> @* Cột Hành động mới *@
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model != null)
+                                {
+                                    @foreach (var item in ((IEnumerable<LichSuGiaoDich>)Model).OrderByDescending(x => x.ThoiGian)) 
+                                    {
+                                        <tr data-id="@item.MaGiaoDich"> @* Thêm data-id để dễ thao tác JS *@
+                                            <td><input type="checkbox" /></td>
+                                            <td>@item.MaGiaoDich</td>
+                                            <td>@item.LoaiGiaoDich</td>
+                                            <td>@item.ThoiGian.ToString("dd/MM/yyyy HH:mm")</td>
+                                            <td>@item.DoiTac</td>
+                                            <td>@FormatCurrency(item.GiaTri)</td>
+                                            <td> @* CỘT HÀNH ĐỘNG *@
+                                                <div class="btn-action-group">
+                                                    <button class="btn btn-success btn-sm btn-action" onclick="handleEdit('@item.MaGiaoDich')">
+                                                        <i class="fas fa-edit"></i> Sửa
+                                                    </button>
+                                                    <button class="btn btn-danger btn-sm btn-action" onclick="handleDelete('@item.MaGiaoDich')">
+                                                        <i class="fas fa-trash-alt"></i> Xóa
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    @* Cập nhật colspan = 7 (1 checkbox + 5 cột dữ liệu + 1 cột Hành động mới) *@
+                                    <tr><td colspan="7" class="text-center p-4 text-muted">Không có dữ liệu lịch sử giao dịch.</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="text-center py-5 text-muted" id="noResults" style="display:none;">
+                        <i class="fas fa-inbox fa-3x text-secondary"></i>
+                        <p class="mt-2">Không tìm thấy kết quả<br />
+                            <a href="#" class="text-dark font-weight-bold" onclick="resetFilters(event)">Nhấn vào đây</a> để tiếp tục tìm kiếm.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="editModalLabel"><i class="fas fa-edit mr-2"></i>Chỉnh sửa giao dịch: <span id="modal-MaGiaoDich"></span></h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editTransactionForm">
+                    <div class="mb-3">
+                        <label for="modal-LoaiGiaoDich" class="form-label font-weight-bold">Loại giao dịch</label>
+                        <input type="text" class="form-control" id="modal-LoaiGiaoDich" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="modal-DoiTac" class="form-label font-weight-bold">Đối tác</label>
+                        <input type="text" class="form-control" id="modal-DoiTac" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="modal-GiaTri" class="form-label font-weight-bold">Giá trị</label>
+                        <input type="number" class="form-control text-right" id="modal-GiaTri" required>
+                    </div>
+                    <input type="hidden" id="modal-CurrentId">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-success" id="saveEditBtn"><i class="fas fa-save mr-1"></i>Lưu thay đổi</button>
+            </div>
+        </div>
+    </div>
+</div
+</section>
+
+@section Scripts { 
+<script>
+$(document).ready(function () {
+    // Ẩn input ngày khi mới load
+    $('#dateFilter').hide(); 
+
+    // 1. Logic hiển thị/ẩn input ngày tùy chỉnh
+    $('input[name="thoigian"]').change(function () {
+        if ($(this).val() === 'custom') {
+            $('#dateFilter').show();
+        } else {
+            $('#dateFilter').hide();
+            $('#dateFilter').val(''); // Xóa ngày đã chọn khi chuyển sang Thàng này
+        }
+    });
+    
+    $('#applyFilter').click(function () {
+        if ($(window).width() < 768) {
+            $('#filterCollapseContent').collapse('hide');
+        }
+        performFilterAndSearch();
+    });
+
+    $('#searchBtn').click(performFilterAndSearch);
+    $('#searchInput').on('keyup', performFilterAndSearch);
+
+    // Hàm tổng hợp Lọc và Tìm kiếm (GIỮ NGUYÊN)
+    function performFilterAndSearch() {
+        var keyword = $('#searchInput').val().toLowerCase().trim();
+        var selectedLoaiGiaoDich = $('#loaiGiaoDichFilter').val(); 
+        var selectedDate = $('input[name="thoigian"]:checked').val() === 'custom' ? $('#dateFilter').val() : '';
+        
+        var resultsFound = 0;
+        var formattedDateFilter = '';
+        
+        if (selectedDate) {
+            formattedDateFilter = selectedDate.split('-').reverse().join('/');
+        }
+
+        $('#lichSuGiaoDichTable tbody tr').each(function () {
+            var row = $(this);
+            if (row.find('td[colspan]').length > 0) return;
+
+            var showRow = true;
+
+            var rowLoaiGiaoDich = row.find('td:eq(2)').text().trim(); 
+            if (selectedLoaiGiaoDich && rowLoaiGiaoDich !== selectedLoaiGiaoDich) {
+                showRow = false;
+            }
+            
+            if (showRow && selectedDate) {
+                var rowNgay = row.find('td:eq(3)').text().trim().substring(0, 10);
+                if (rowNgay !== formattedDateFilter) {
+                    showRow = false;
+                }
+            }
+
+            if (showRow && keyword) {
+                var code = row.find('td:eq(1)').text().toLowerCase();
+                var doiTac = row.find('td:eq(4)').text().toLowerCase();
+                
+                if (!(code.includes(keyword) || doiTac.includes(keyword))) { 
+                    showRow = false;
+                }
+            }
+
+            if (showRow) { 
+                row.show(); 
+                resultsFound++; 
+            }
+            else { 
+                row.hide(); 
+            }
+        });
+
+        var hasInitialData = $('#lichSuGiaoDichTable tbody tr').not(':has(td[colspan])').length > 0;
+        if (hasInitialData) {
+              $('#lichSuGiaoDichTable').toggle(resultsFound > 0);
+        } else {
+              $('#lichSuGiaoDichTable').show();
+        }
+        $('#noResults').toggle(resultsFound === 0 && hasInitialData);
+    }
+    
+    // 3. Chọn tất cả (GIỮ NGUYÊN)
+    $('#selectAll').click(function () {
+        $('#lichSuGiaoDichTable tbody input[type="checkbox"]').prop('checked', this.checked);
+    });
+
+    // 4. Hàm reset filters khi không có kết quả (GIỮ NGUYÊN)
+    window.resetFilters = function(e) {
+        e.preventDefault();
+        $('#searchInput').val('');
+        $('#loaiGiaoDichFilter').val('');
+        $('#thangnay').prop('checked', true).trigger('change');
+        performFilterAndSearch();
+    };
+
+
+    // ===============================================
+    // *** PHẦN CHỈNH SỬA CHO HÀNH ĐỘNG SỬA (EDIT) ***
+    // ===============================================
+    
+    // 5. Hàm xử lý hành động Sửa (MỞ MODAL)
+    window.handleEdit = function(transactionId) {
+        // Tìm hàng tương ứng trong bảng
+        var row = $('tr[data-id="' + transactionId + '"]');
+        
+        if (row.length === 0) {
+            alert('Không tìm thấy giao dịch ' + transactionId + '!');
+            return;
+        }
+
+        // Lấy dữ liệu từ các cột trong hàng
+        // Index cột: Checkbox(0), MaGiaoDich(1), LoaiGiaoDich(2), ThoiGian(3), DoiTac(4), GiaTri(5), HanhDong(6)
+        var maGiaoDich = row.find('td:eq(1)').text().trim();
+        var loaiGiaoDich = row.find('td:eq(2)').text().trim();
+        var doiTac = row.find('td:eq(4)').text().trim();
+        // Lấy Giá trị (và loại bỏ ký tự tiền tệ, dấu phân cách hàng nghìn)
+        var giaTriText = row.find('td:eq(5)').text().trim().replace(' ₫', '').replace(/,/g, ''); 
+        var giaTri = parseFloat(giaTriText);
+
+
+        // Đổ dữ liệu vào Modal
+        $('#modal-CurrentId').val(transactionId); // Lưu ID để dùng khi lưu
+        $('#modal-MaGiaoDich').text(maGiaoDich);
+        $('#modal-LoaiGiaoDich').val(loaiGiaoDich);
+        $('#modal-DoiTac').val(doiTac);
+        $('#modal-GiaTri').val(giaTri);
+
+        // Hiển thị Modal
+        $('#editModal').modal('show');
+    };
+
+    // 5.1. Xử lý sự kiện click nút "Lưu thay đổi" trong Modal
+    $('#saveEditBtn').click(function() {
+        var transactionId = $('#modal-CurrentId').val();
+        var newDoiTac = $('#modal-DoiTac').val();
+        var newGiaTri = parseFloat($('#modal-GiaTri').val());
+
+        if (!newDoiTac || isNaN(newGiaTri) || newGiaTri <= 0) {
+            alert('Vui lòng nhập đầy đủ và hợp lệ thông tin Đối tác và Giá trị!');
+            return;
+        }
+        
+        // Disable nút Lưu để tránh double click
+        $('#saveEditBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i>Đang lưu...');
+
+
+        // THỰC HIỆN AJAX để cập nhật dữ liệu trên Server
+        // LƯU Ý: Bạn cần phải tạo một Action (ví dụ: /GiaoDich/Update) để xử lý việc lưu dữ liệu này
+        $.post('/GiaoDich/Update', { 
+            id: transactionId, 
+            doiTac: newDoiTac, 
+            giaTri: newGiaTri 
+        })
+        .done(function(response) { 
+            if (response.success) {
+                // Cập nhật dữ liệu trên giao diện (DOM) sau khi lưu thành công
+                var row = $('tr[data-id="' + transactionId + '"]');
+                // Index cột Đối tác (4), Giá trị (5)
+                row.find('td:eq(4)').text(newDoiTac); 
+                
+                // Format lại tiền tệ (phụ thuộc vào hàm FormatCurrency của bạn)
+                // Đây là cách format cơ bản trong JS, bạn có thể thay bằng hàm format chuyên nghiệp hơn
+                var formattedGiaTri = newGiaTri.toLocaleString('vi-VN') + ' ₫';
+                row.find('td:eq(5)').text(formattedGiaTri);
+                
+                // Ẩn Modal và thông báo thành công
+                $('#editModal').modal('hide');
+                alert('Thành công: Cập nhật giao dịch ' + transactionId + ' đã được lưu.');
+                
+            } else {
+                alert('Lỗi cập nhật: ' + response.message);
+            }
+        })
+        .fail(function(xhr, status, error) {
+            alert('Lỗi kết nối hoặc Server: ' + error);
+        })
+        .always(function() {
+            // Re-enable nút Lưu
+            $('#saveEditBtn').prop('disabled', false).html('<i class="fas fa-save mr-1"></i>Lưu thay đổi');
+        });
+    });
+
+    // 6. Hàm xử lý hành động Xóa (DELETE) (GIỮ NGUYÊN)
+    window.handleDelete = function(transactionId) {
+        if (confirm('Bạn có chắc chắn muốn xóa giao dịch ' + transactionId + ' không? Thao tác này không thể hoàn tác.')) {
+            
+            $.post('/GiaoDich/Delete', { id: transactionId })
+                .done(function(response) { 
+                    if (response.success) {
+                        $('tr[data-id="' + transactionId + '"]').fadeOut(400, function() {
+                            $(this).remove();
+                            performFilterAndSearch(); 
+                        });
+                        alert('Thành công: ' + response.message);
+                } else {
+                        alert('Lỗi xóa: ' + response.message);
+                    }
+                })
+                .fail(function(xhr, status, error) {
+                    alert('Lỗi kết nối Server hoặc API: ' + error);
+                });
+        }
+    };
+
+    performFilterAndSearch();
+});
+</script>
+}

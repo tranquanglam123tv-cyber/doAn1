@@ -1,0 +1,482 @@
+@model IEnumerable<QuanLyKho.Models.DatHangNhap>
+
+@{
+    ViewBag.Title = "Đặt hàng nhập";
+    Layout = "/Views/Shared/_Layout.cshtml";
+    var successColor = "#28a745";
+}
+
+<style>
+/* 1. CSS Cho Header Mobile & Responsive */
+.app-header {
+    background-color: #28a745;
+    /* Màu xanh Ebike */
+    color: white;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between; 
+    align-items: center;
+    position: sticky; top: 0; z-index: 1000;
+}
+
+.app-header .btn-header-group { display: flex; align-items: center; }
+.app-header .btn { font-size: 0.8rem;
+    padding: 0.25rem 0.5rem; line-height: 1.5; margin-left: 5px; }
+.app-header .btn-white-green-text {
+    color: #28a745 !important; background-color: white !important;
+    border: 1px solid white !important; font-weight: bold;
+    display: inline-flex; align-items: center; justify-content: center;
+}
+
+/* 2. CSS Cho Badge Trạng thái */
+#trangThaiContainer { display: flex; flex-wrap: wrap; gap: 5px;
+}
+.selectable-badge {
+    display: flex; align-items: center; justify-content: center;
+    width: auto !important; flex-grow: 1; height: 35px;
+    padding: 0 10px; 
+    cursor: pointer; transition: all 0.2s ease-in-out; white-space: nowrap; 
+    background-color: white !important; color: #212529 !important;
+    border: 1px solid #28a745; border-radius: 4px; font-size: 13px; 
+}
+.selectable-badge:hover { background-color: #f1f8f2 !important;
+}
+.selectable-badge.active-status {
+    background-color: #28a745 !important; color: white !important; font-weight: bold;
+    border-color: #28a745;
+    box-shadow: 0 0 5px rgba(40, 167, 69, 0.5); 
+}
+
+/* 3. CSS Cho Nút Thẳng Hàng (Desktop) */
+.action-buttons { display: flex;
+    align-items: center; gap: 5px; height: 100%; }
+.action-buttons .btn {
+    white-space: nowrap !important; height: 38px; 
+    display: inline-flex;
+    align-items: center; justify-content: center;
+    min-width: 90px; font-weight: 600; border-radius: 5px;
+}
+#searchInput { height: 38px;
+}
+.input-group-append .btn {
+    height: 38px; display: flex; align-items: center; justify-content: center;
+    padding-top: 0; padding-bottom: 0;
+}
+
+/* 4. Responsive */
+@@media (max-width: 767.98px) {
+    .app-header h4 { max-width: 50%; font-size: 1.1rem;
+    }
+    .app-header .btn-header-group { overflow-x: auto; white-space: nowrap; justify-content: flex-end;
+    }
+    .input-group + .btn.d-md-none { padding: 0.375rem 0.75rem; }
+    .action-buttons .btn { font-size: 0.8rem;
+    padding: 0 8px; }
+}
+@@media (min-width: 768px) { .app-header { display: none !important;
+    } }
+
+/* 5. CSS Khi In (Ẩn menu thừa) */
+@@media print {
+    .app-header, .main-sidebar, .main-header, .action-buttons, #filterCollapseContent, #searchBtn, #searchInput, .main-footer, .card-header, #selectAll, .modal-backdrop {
+        display: none !important;
+    }
+    .content-wrapper { margin-left: 0 !important; padding-top: 0 !important; background: white !important;
+    }
+    .card { box-shadow: none !important; border: none !important;
+    }
+    table { width: 100% !important; border-collapse: collapse !important;
+    }
+    th, td { border: 1px solid #000 !important; padding: 5px !important; color: #000 !important;
+    }
+}
+</style>
+
+<div class="app-header">
+    <h4 class="m-0 font-weight-bold"><i class="fas fa-truck-loading mr-2"></i> Đặt hàng nhập</h4>
+    <div class="btn-header-group d-flex d-md-none">
+        <button class="btn btn-white-green-text" id="btnExportMobile">
+            <i class="fas fa-file-excel"></i>
+        </button>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid pt-3">
+    
+        <div class="row">
+            <div class="col-12 col-md-3 mb-3 collapse d-md-block" id="filterCollapseContent">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body">
+                        <h5 class="font-weight-bold mb-3 text-dark">Bộ lọc Đặt hàng nhập</h5>
+    
+                        <div class="mb-3">
+                            <label class="form-label font-weight-bold text-dark">Chi nhánh</label>
+                            <select class="form-control" id="chiNhanhFilter">
+                    
+                                <option value="CN - NVC (Cần Thơ)">CN - NVC (Cần Thơ)</option>
+                                <option value="Kho tổng">Kho tổng</option>
+                                <option value="CN Trần Hoàng Na">CN Trần Hoàng Na</option>
+    
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label font-weight-bold text-dark">Thời gian</label>
+                            <div class="form-check">
+        
+                                <input class="form-check-input" type="radio" name="thoigian" id="thangnay" value="month" checked>
+                                <label class="form-check-label text-dark" for="thangnay">Tháng này</label>
+                            </div>
+        
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="thoigian" id="tuychinh" value="custom">
+                                <label class="form-check-label text-dark" for="tuychinh">Tùy chỉnh</label>
+    
+                            </div>
+                            <input type="date" class="form-control" id="dateFilter" style="display:none;"
+                            /> 
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label font-weight-bold text-dark">Người tạo</label>
+                
+                            <select class="form-control" id="nguoiTaoFilter">
+                                <option value="">Chọn người tạo</option>
+                                <option value="Nguyễn Văn A">Nguyễn Văn A</option>
+                
+                                <option value="Trần Thị B">Trần Thị B</option>
+                                <option value="Lê Văn C">Lê Văn C</option>
+                            </select>
+            
+                        </div>
+                        <button class="btn btn-success btn-block font-weight-bold mt-3" id="applyFilter">
+                            <i class="fas fa-filter"></i> Áp dụng bộ lọc
+                        </button>
+    
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-9">
+                <div class="d-flex align-items-center mb-3">
+                    <div 
+                        class="input-group flex-grow-1 mr-2">
+                        <input type="text" class="form-control" id="searchInput" placeholder="Theo mã phiếu đặt hàng nhập..." />
+                        <div class="input-group-append">
+                            <button class="btn btn-success" id="searchBtn"><i class="fas fa-search"></i></button>
+        
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-outline-secondary d-md-none" type="button" data-toggle="collapse" data-target="#filterCollapseContent">
+        
+                        <i class="fas fa-filter"></i> 
+                    </button>
+                    
+                    <div class="ml-auto d-none d-md-flex action-buttons">
+                        <button class="btn btn-success mr-2 font-weight-bold" id="btnTaoPhieu" data-toggle="modal" data-target="#taoPhieuModal">
+                            <i class="fas fa-plus mr-1"></i> Tạo phiếu
+                        </button>
+                        <button class="btn btn-outline-secondary" id="btnExport">
+            
+                            <i class="fas fa-file-excel mr-1"></i> Xuất Excel
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm 
+                    border-0">
+                    <div class="card-header font-weight-bold bg-success text-white">
+                        Danh sách phiếu đặt hàng nhập
+                    </div>
+                    <div class="card-body p-0 table-responsive">
+    
+                        <table class="table table-hover align-middle mb-0 text-center" id="phieuDatHangTable">
+                            <thead class="bg-success text-white">
+                                <tr>
+            
+                                    <th><input type="checkbox" id="selectAll" /></th>
+                                    <th>Mã đặt hàng nhập</th>
+                                    
+                                    <th>Thời gian</th>
+                                    <th>Nhà cung cấp</th>
+                                    <th>Ngày nhập dự kiến</th>
+                    
+                                    <th>Số ngày chờ</th>
+                                    <th>Cần trả NCC</th>
+                                    <th>Trạng thái</th>
+        
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model != null)
+                                {
+                                    foreach (var item in Model)
+                                    {
+                                        var statusClass = item.TrangThai switch
+                                        {
+                                            "Phiếu tạm" => "badge-secondary",
+                                            "Đã xác nhận NCC" => "badge-primary",
+                                            "Nhập một phần" => "badge-info", // Giả định class
+                                            "Hoàn tất" => "badge-success",
+                                            "Hủy" => "badge-danger", // Giả định class
+                                            _ => "badge-light"
+                                        };
+
+                                        // Ghi chú: Chi nhánh và Người tạo không có trong model DatHangNhap,
+                                        // Sử dụng giá trị placeholder để bộ lọc JS hoạt động.
+                                        var chiNhanhPlaceholder = "Kho tổng"; 
+                                        var nguoiTaoPlaceholder = "Admin";
+
+                                        <tr data-status="@item.TrangThai" data-chinhanh="@chiNhanhPlaceholder" data-nguoitao="@nguoiTaoPlaceholder">
+                                            <td><input type="checkbox" /></td>
+                                            <td>@item.MaPhieuDat</td>
+                                            <td>@item.ThoiGian.ToString("dd/MM/yyyy HH:mm")</td>
+                                            <td>@(item.NhaCungCap?.TenNCC ?? "N/A")</td> 
+                                            <td>@item.NgayNhapDuKien.ToString("dd/MM/yyyy")</td>
+                                            <td>@item.SoNgayCho</td> 
+                                            <td>@item.TongTien.ToString("N0") ₫</td> 
+                                            <td><span class="badge @statusClass">@item.TrangThai</span></td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="text-center py-5 text-muted" id="noResults" style="display:none;">
+            
+                        <i class="fas fa-inbox fa-3x text-secondary"></i>
+                        <p class="mt-2">Không tìm thấy kết quả<br />
+                            <a href="#" class="text-dark font-weight-bold">Nhấn vào đây</a> để tiếp tục tìm kiếm.</p>
+            
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="modal fade" id="taoPhieuModal" tabindex="-1" role="dialog" aria-labelledby="taoPhieuModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title font-weight-bold" id="taoPhieuModalLabel"><i class="fas fa-plus-circle mr-2"></i> Tạo Phiếu Đặt Hàng Nhập Mới</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="formTaoPhieu">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="MaNCC" class="font-weight-bold">Nhà cung cấp (*)</label>
+                        <select class="form-control" id="MaNCC" required>
+                            <option value="">-- Chọn Nhà cung cấp --</option>
+                            @if (ViewBag.NCCs != null)
+                            {
+                                foreach (var ncc in ViewBag.NCCs)
+                                {
+                                    <option value="@ncc.MaNCC">@ncc.TenNCC</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="NgayNhapDuKien" class="font-weight-bold">Ngày nhập dự kiến (*)</label>
+                        <input type="date" class="form-control" id="NgayNhapDuKien" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="TongTien" class="font-weight-bold">Tổng tiền (VNĐ) (*)</label>
+                        <input type="number" class="form-control" id="TongTien" min="0" required placeholder="Nhập tổng tiền cần trả NCC" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="TrangThai" class="font-weight-bold">Trạng thái ban đầu</label>
+                        <select class="form-control" id="TrangThai">
+                            <option value="Phiếu tạm" selected>Phiếu tạm</option>
+                            <option value="Đã xác nhận NCC">Đã xác nhận NCC</option>
+                        </select>
+                    </div>
+
+                    <p class="text-danger small mt-3" id="errorMessage" style="display:none;"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal"><i class="fas fa-times mr-1"></i> Đóng</button>
+                    <button type="submit" class="btn btn-success" id="btnLuuPhieu"><i class="fas fa-save mr-1"></i> Lưu Phiếu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Hàm tiện ích để hiển thị thông báo
+            function showToast(message, type) {
+                // Thay thế bằng thư viện Toast (toastr/sweetalert/etc.) nếu có.
+                // Tạm thời dùng alert hoặc console log.
+                alert(message);
+                console.log(type + ": " + message);
+            }
+
+            // --- 1. XỬ LÝ SỰ KIỆN TẠO PHIẾU VÀ LƯU DỮ LIỆU ---
+            $('#formTaoPhieu').submit(function (e) {
+                e.preventDefault();
+                $('#errorMessage').hide().text('');
+                
+                // Lấy dữ liệu từ form
+                var maNCC = $('#MaNCC').val();
+                var ngayDuKien = $('#NgayNhapDuKien').val();
+                var tongTien = $('#TongTien').val();
+                var trangThai = $('#TrangThai').val();
+
+                if (!maNCC || !ngayDuKien || parseFloat(tongTien) <= 0) {
+                    $('#errorMessage').text('Vui lòng điền đầy đủ và chính xác các trường bắt buộc (*).').show();
+                    return;
+                }
+
+                // Tính toán SoNgayCho (Controller sẽ tính lại, nhưng gửi lên để đảm bảo khớp dữ liệu)
+                var dateNgayDuKien = new Date(ngayDuKien);
+                var today = new Date();
+                today.setHours(0, 0, 0, 0); 
+                
+                var timeDiff = dateNgayDuKien.getTime() - today.getTime();
+                // Số ngày chờ làm tròn lên
+                var soNgayCho = Math.ceil(timeDiff / (1000 * 3600 * 24));
+                if (soNgayCho < 0) soNgayCho = 0; 
+
+                var phieuData = {
+                    MaNCC: maNCC,
+                    NgayNhapDuKien: ngayDuKien, 
+                    TongTien: parseFloat(tongTien),
+                    TrangThai: trangThai,
+                    // SoNgayCho không bắt buộc vì Controller tự tính, nhưng gửi lên cũng không sao.
+                    // SoNgayCho: soNgayCho 
+                };
+                
+                // Gửi dữ liệu bằng AJAX
+                $.ajax({
+                    url: '@Url.Action("TaoPhieuDatHangNhap", "GiaoDich")', 
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(phieuData),
+                    beforeSend: function() {
+                        $('#btnLuuPhieu').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Đang lưu...');
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            showToast('Tạo phiếu thành công! Mã PO: ' + response.poCode, 'success');
+                            $('#taoPhieuModal').modal('hide');
+                            // Tải lại trang để thấy dữ liệu mới
+                            window.location.reload(); 
+                        } else {
+                            // Cập nhật hiển thị lỗi chi tiết hơn 
+                            var errorMsg = response.message || 'Lỗi: Không thể tạo phiếu. Vui lòng kiểm tra lại.';
+                            if (response.details) {
+                                errorMsg += " (Chi tiết: " + response.details.map(d => d.field + ": " + d.errors.join(", ")).join("; ") + ")";
+                            }
+                            $('#errorMessage').text(errorMsg).show();
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        // Lỗi phía server (500, 400...)
+                        var errorText = xhr.responseJSON?.message || error;
+                        $('#errorMessage').text('Lỗi hệ thống: ' + errorText).show();
+                    },
+                    complete: function() {
+                         $('#btnLuuPhieu').prop('disabled', false).html('<i class="fas fa-save mr-1"></i> Lưu Phiếu');
+                    }
+                });
+            });
+
+            // --- 2. XỬ LÝ SỰ KIỆN NÚT (EXPORT) ---
+            
+            // Xử lý nút Xuất Excel (Kết hợp cả ID desktop và ID mobile)
+            $('#btnExport, #btnExportMobile').click(function() {
+                var table = document.getElementById("phieuDatHangTable");
+                var html = table.outerHTML;
+                var blob = new Blob(['\ufeff', html], { type: 'application/vnd.ms-excel' });
+            
+                var url = URL.createObjectURL(blob);
+                var link = document.createElement("a");
+                link.download = "DanhSachDatHangNhap.xls"; 
+                link.href = url;
+                link.click();
+            });
+
+            // --- 3. CÁC HÀM XỬ LÝ LỌC & GIAO DIỆN KHÁC (Giữ nguyên) ---
+            $('#dateFilter').hide();
+            $('input[name="thoigian"]').change(function () {
+                if ($(this).val() === 'custom') { $('#dateFilter').show(); } 
+                else { $('#dateFilter').hide(); $('#dateFilter').val(''); }
+            });
+            $('.selectable-badge').click(function () {
+                $('.selectable-badge').removeClass('active-status');
+                $(this).addClass('active-status');
+            });
+            $('#applyFilter').click(function () {
+                if ($(window).width() < 768) { $('#filterCollapseContent').collapse('hide'); }
+                performFilter();
+            });
+            $('#searchBtn').click(function () { performSearch(); });
+            $('#searchInput').on('keyup', function (e) {
+                if (e.key === 'Enter') performSearch();
+            });
+            function performSearch() {
+                var keyword = $('#searchInput').val().toLowerCase().trim();
+                var resultsFound = 0;
+                $('#phieuDatHangTable tbody tr').each(function () {
+                    var code = $(this).find('td:eq(1)').text().toLowerCase(); 
+                    if (code.includes(keyword)) { $(this).show(); resultsFound++; } else { $(this).hide(); }
+                });
+                if (resultsFound === 0) { $('#noResults').show(); $('#phieuDatHangTable').hide(); } 
+                else { $('#noResults').hide();
+                    $('#phieuDatHangTable').show(); }
+            }
+
+            function performFilter() {
+                var selectedStatus = $('.selectable-badge.active-status').data('status') ||
+                '';
+                var selectedChiNhanh = $('#chiNhanhFilter').val();
+                var selectedNguoiTao = $('#nguoiTaoFilter').val();
+                var selectedDate = $('input[name="thoigian"]:checked').val() === 'custom' ? $('#dateFilter').val() : '';
+                var visibleRows = 0;
+
+                $('#phieuDatHangTable tbody tr').each(function () {
+                    var row = $(this);
+                    var rowStatus = row.data('status');
+                    var rowChiNhanh = row.data('chinhanh');
+                    var rowNguoiTao = 
+                    row.data('nguoitao');
+                    var rowNgayDuKien = row.find('td:eq(4)').text().trim(); 
+
+                    var showRow = true;
+                    if (selectedStatus && rowStatus !== selectedStatus) showRow = false;
+                    
+                    if (selectedChiNhanh && rowChiNhanh !== 
+                    selectedChiNhanh) showRow = false;
+                    if (selectedNguoiTao && rowNguoiTao !== selectedNguoiTao) showRow = false;
+                    
+                    if (selectedDate) {
+                        var formattedDateFilter = selectedDate.split('-').reverse().join('/');
+                    
+                        if (rowNgayDuKien !== formattedDateFilter) showRow = false;
+                    }
+
+                    if (showRow) { row.show(); visibleRows++; } else { row.hide();
+                    }
+                });
+                if (visibleRows === 0) { $('#noResults').show(); $('#phieuDatHangTable').hide(); } 
+                else { $('#noResults').hide();
+                    $('#phieuDatHangTable').show(); }
+            }
+            
+            $('#selectAll').click(function () {
+                $('#phieuDatHangTable tbody input[type="checkbox"]').prop('checked', this.checked);
+            });
+        });
+    </script>
+}

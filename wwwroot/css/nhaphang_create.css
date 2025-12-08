@@ -1,0 +1,22 @@
+/* Bảng scroll ngang khi màn hình nhỏ */
+.table-responsive {
+    overflow-x: auto;
+}
+
+/* Không để input co quá nhỏ */
+.table input.form-control {
+    min-width: 80px;
+    text-align: right;
+}
+
+/* Card padding */
+.card {
+    padding: 15px;
+}
+
+/* Responsive cho nút lưu/hoàn thành */
+@media (max-width: 576px) {
+    .d-flex.flex-sm-row {
+        flex-direction: column !important;
+    }
+}

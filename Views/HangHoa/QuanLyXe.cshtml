@@ -1,0 +1,554 @@
+@{
+    ViewBag.Title = "Quản lý hàng hóa";
+    Layout = "/Views/Shared/_Layout.cshtml";
+}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<style>
+    /* Sử dụng biến CSS để quản lý màu sắc nhất quán */
+    :root {
+        --primary-green-dark: #28a745;
+        --table-header-bg: white; 
+        --table-header-color: #4a4a4a; 
+        --background-color: #f7fcf7;
+        --shadow-color: rgba(0, 0, 0, 0.08);
+        --border-color: #e1e1e1; /* Viền nhẹ hơn */
+        --action-blue: #007bff; /* Màu xanh dương cho phân trang/nút xuất file */
+        --light-green-border: #28a745; /* Màu xanh lá nhạt cho border input */
+    }
+
+    /* ====== MÀU VÀ GIAO DIỆN CHUNG ====== */
+    body {
+        background-color: var(--background-color);
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+   
+    .text-success, h4.text-success, h5.text-success, .filter-label {
+        color: var(--primary-green-dark) !important;
+    }
+
+    /* Nút hành động chính (Tạo mới, Lưu) */
+    .btn-xanhbo {
+        background-color: var(--primary-green-dark);
+        color: #fff;
+        border: none;
+        transition: 0.3s;
+        font-weight: 500;
+        border-radius: 6px;
+        padding: 8px 15px;
+        font-size: 14px;
+    }
+    .btn-xanhbo:hover {
+        background-color: #218838; /* Màu hover tối hơn */
+        color: #fff;
+    }
+    
+    /* Nút Xuất file */
+    .btn-action-blue {
+        background-color: var(--action-blue);
+        color: #fff;
+        border: none;
+        transition: 0.2s;
+        font-weight: 500;
+        border-radius: 6px;
+        padding: 8px 15px;
+        font-size: 14px;
+    }
+    .btn-action-blue:hover {
+        background-color: #0069d9;
+        color: #fff;
+    }
+
+   
+    .filter-card {
+        background-color: #fff;
+        border-radius: 8px; 
+        box-shadow: 0 1px 6px var(--shadow-color);
+        padding: 18px;
+        border: 1px solid var(--border-color);
+    }
+    .filter-label {
+        font-weight: 600;
+        margin-bottom: 5px;
+        font-size: 14px;
+        color: #555;
+    }
+
+    /* Input/Select (Thống nhất kiểu dáng) */
+    .form-control, .form-select {
+        border-radius: 6px;
+        font-size: 14px;
+        border-color: var(--light-green-border);
+    }
+    
+    /* Focus */
+    .form-control:focus, .form-select:focus {
+        box-shadow: 0 0 0 0.15rem rgba(40, 167, 69, 0.25); /* Box-shadow xanh lá */
+        border-color: var(--primary-green-dark);
+    }
+
+    /* ====== THANH TÌM KIẾM + NÚT (action-bar) ====== */
+    .action-bar {
+        background-color: #fff;
+        padding: 12px 16px;
+        border-radius: 8px; 
+        box-shadow: 0 1px 6px var(--shadow-color);
+        border: 1px solid var(--border-color);
+    }
+    #globalSearchBox {
+        font-size: 14px;
+    }
+
+    /* ====== BẢNG DỮ LIỆU ====== */
+    .table-responsive {
+        border-radius: 8px;
+        overflow: hidden; 
+        border: 1px solid var(--border-color);
+    }
+    .table th {
+        background-color: var(--table-header-bg) !important;
+        color: var(--table-header-color);
+        font-weight: 600;
+        font-size: 13px; 
+        border-bottom: 2px solid #ddd !important;
+        border-top: none !important;
+        padding: 10px 8px;
+    }
+    
+    .table td {
+        font-size: 13px;
+        border-top: 1px solid #f0f0f0;
+        vertical-align: middle;
+        padding: 8px;
+    }
+    .table-hover > tbody > tr:hover {
+        background-color: #f5fff5; 
+    }
+    
+    /* ĐỊNH DẠNG DATATABLES PHÂN TRANG */
+    .dataTables_paginate .paginate_button.current, 
+    .dataTables_paginate .paginate_button.current:hover {
+        background: var(--action-blue) !important; 
+        color: white !important;
+        border-color: var(--action-blue) !important;
+        border-radius: 4px;
+    }
+    .dataTables_paginate .paginate_button {
+        border-radius: 4px;
+        padding: 5px 10px;
+    }
+    
+    /* Modal Header (Cho cả Thêm mới và Chỉnh sửa) */
+    #newItemModal .modal-header,
+    #editItemModal .modal-header { /* Áp dụng cho modal chỉnh sửa */
+        background-color: var(--primary-green-dark) !important;
+        color: white;
+        border-bottom: none;
+    }
+    .btn-close-white {
+        filter: invert(1) grayscale(100%) brightness(200%);
+    }
+    .modal-title {
+        font-weight: 600;
+    }
+
+    /* **QUAN TRỌNG: Override nút btn-warning cũ thành màu xanh lá** */
+    /* Áp dụng cho nút Chỉnh sửa trong DataTables */
+    .btn-warning.text-white {
+        background-color: var(--primary-green-dark) !important;
+        border-color: var(--primary-green-dark) !important;
+        color: white !important;
+    }
+    .btn-warning.text-white:hover {
+        background-color: #218838 !important;
+        border-color: #1e7e34 !important;
+    }
+</style>
+
+<div class="container-fluid mt-4">
+    <div class="row g-4">
+        <div class="col-lg-3">
+            <div class="filter-card">
+                <h5 class="mb-3 text-success fw-bold">Bộ lọc Xe</h5>
+
+                <div class="mb-3">
+                    <label class="filter-label" for="filterGroup">Nhóm xe</label>
+                    <select id="filterGroup" class="form-select">
+                        <option value="">Tất cả nhóm</option>
+                        <option>Xe máy điện</option>
+                        <option>Xe đạp điện</option>
+                        <option>Xe tay ga</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="filter-label" for="filterStock">Tồn kho</label>
+                    <select id="filterStock" class="form-select">
+                        <option value="">Tất cả tồn kho</option>
+                        <option value="available">Còn hàng</option>
+                        <option value="outOfStock">Hết hàng</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-9">
+            <h4 class="fw-bold text-success mb-3">
+                <i class="fa-solid fa-boxes-stacked"></i> Quản lý Xe
+            </h4>
+            <div class="action-bar mb-3 d-flex justify-content-between flex-wrap align-items-center">
+                <input type="text" id="globalSearchBox" class="form-control me-2" placeholder="🔍 Theo mã, tên xe/hàng hóa..." style="width: 250px;">
+                <div class="d-flex align-items-center gap-2 mt-2 mt-md-0">
+                    <button class="btn btn-xanhbo" data-bs-toggle="modal" data-bs-target="#newItemModal">
+                        <i class="fa fa-plus"></i> Tạo mới
+                    </button>
+                    <button class="btn btn-action-blue" onclick="alert('Chức năng Xuất file chưa được lập trình.');">
+                        <i class="fa-solid fa-file-export"></i> Xuất file
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table id="itemTable" class="table table-hover bg-white" style="width:100%">
+                    <thead class="text-center">
+                        <tr>
+                            <th>Mã xe</th>
+                            <th>Tên xe</th>
+                            <th>Nhóm xe</th>
+                            <th>Giá bán</th>
+                            <th>Giá vốn</th>
+                            <th>Tồn kho</th>
+                            <th>Khách đặt</th>
+                            <th>Thời gian tạo</th>
+                            <th>Đặt NCC</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>    
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="newItemModal" tabindex="-1" aria-labelledby="newItemModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="newItemModalLabel"><i class="fa fa-plus"></i> Thêm Xe Mới</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addItemForm">
+                    <div class="mb-3">
+                        <label for="itemName" class="form-label">Tên Xe <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="itemName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="itemCode" class="form-label">Mã Xe (Để trống để tự tạo)</label>
+                        <input type="text" class="form-control" id="itemCode">
+                    </div>
+                    <div class="mb-3">
+                        <label for="itemGroup" class="form-label">Nhóm xe</label>
+                        <select class="form-select" id="itemGroup" required>
+                            <option value="Xe máy điện">Xe máy điện</option>
+                            <option value="Xe đạp điện">Xe đạp điện</option>
+                            <option value="Xe tay ga">Xe tay ga</option>
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="sellPrice" class="form-label">Giá bán (₫)</label>
+                            <input type="number" class="form-control" id="sellPrice" value="0">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="costPrice" class="form-label">Giá vốn (₫)</label>
+                            <input type="number" class="form-control" id="costPrice" value="0">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="initialStock" class="form-label">Tồn kho ban đầu</label>
+                        <input type="number" class="form-control" id="initialStock" value="0">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-xanhbo" onclick="handleNewItemSubmit()">Lưu Xe</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<div class="modal fade" id="editItemModal" tabindex="-1">
+  <div class="modal-dialog">
+   <div class="modal-content">
+
+     <div class="modal-header">
+       <h5 class="modal-title"><i class="fa-solid fa-pen-to-square"></i> Chỉnh sửa Xe</h5>
+       <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+     </div>
+
+     <div class="modal-body">
+       <form id="formEdit">
+         <input type="hidden" id="editMaHang">
+
+         <label class="form-label mt-2">Tên xe</label>
+         <input class="form-control" id="editTenHang">
+
+         <label class="form-label mt-2">Nhóm xe</label>
+         <select class="form-select" id="editLoaiHang">
+             <option value="Xe máy điện">Xe máy điện</option>
+             <option value="Xe đạp điện">Xe đạp điện</option>
+             <option value="Xe tay ga">Xe tay ga</option>
+         </select>
+
+         <label class="form-label mt-2">Giá bán</label>
+         <input class="form-control" id="editGiaBan" type="number">
+
+         <label class="form-label mt-2">Giá vốn</label>
+         <input class="form-control" id="editGiaVon" type="number">
+
+         <label class="form-label mt-2">Tồn kho</label>
+         <input class="form-control" id="editTonKho" type="number">
+       </form>
+     </div>
+
+     <div class="modal-footer">
+       <button class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+       <button class="btn btn-xanhbo" onclick="submitEdit()">Lưu thay đổi</button>
+     </div>
+
+   </div>
+  </div>
+</div>
+
+
+<script>
+var table;
+const CODE_COL = 0, GROUP_COL = 2, SELL_PRICE_COL = 3, COST_PRICE_COL = 4, STOCK_COL = 5;
+
+// Format tiền tệ Việt Nam
+function formatCurrency(number){
+    const num = parseInt(number) || 0;
+    return new Intl.NumberFormat('vi-VN',{style:'currency',currency:'VND',minimumFractionDigits:0}).format(num).replace('₫', 'đ');
+}
+
+// 1. Thêm mới hàng hóa (Sử dụng AJAX Server-Side)
+function handleNewItemSubmit(){
+    const name = $('#itemName').val().trim();
+    if(!name){ alert('Vui lòng nhập Tên xe.'); return; }
+
+    const data = {
+        MaHang: $('#itemCode').val().trim(),
+        TenHang: name,
+        LoaiHang: $('#itemGroup').val(),
+        GiaBan: parseInt($('#sellPrice').val())||0,
+        GiaVon: parseInt($('#costPrice').val())||0,
+        TonKho: parseInt($('#initialStock').val())||0,
+        KhachDat: 0,
+        DatNCC: 0
+    };
+
+
+    $.ajax({
+        url:"/HangHoa/Create", 
+        type:"POST",
+        contentType:"application/json",
+        data: JSON.stringify(data),
+        success: function(res){
+            if (res.success) {
+                // Tải lại DataTables sau khi thêm
+                table.ajax.reload(null, false); 
+                
+                const modal = bootstrap.Modal.getInstance(document.getElementById('newItemModal'));
+                modal.hide();
+                $('#addItemForm')[0].reset();
+                alert(`Đã thêm xe "${name}" thành công! Mã: ${res.maHang}`);
+            } else {
+                alert('Thêm xe thất bại. Lỗi: ' + (res.message || 'Lỗi không xác định.'));
+            }
+        },
+        error:function(xhr){ 
+            console.error("Lỗi AJAX:", xhr.responseText);
+            alert('Có lỗi Server khi thêm xe.'); 
+        }
+    });
+}
+
+// 2. Mở Modal Chỉnh sửa (Tải dữ liệu)
+function openEditModal(maHang){
+    $.ajax({
+        url: '/HangHoa/GetById?ma=' + maHang,
+        type: 'GET',
+        success: function(res){
+            $('#editMaHang').val(res.maHang);
+            $('#editTenHang').val(res.tenHang);
+            $('#editLoaiHang').val(res.loaiHang);
+            $('#editGiaBan').val(res.giaBan);
+            $('#editGiaVon').val(res.giaVon);
+            $('#editTonKho').val(res.tonKho);
+            
+            $('#editItemModal').modal('show');
+        },
+        error: function(xhr) { 
+            console.error("Lỗi AJAX GetById:", xhr.responseText);
+            alert('Lỗi Server khi tải dữ liệu xe.'); 
+        }
+    });
+}
+
+// 3. Gửi dữ liệu Chỉnh sửa
+function submitEdit(){
+    var data = {
+        MaHang: $('#editMaHang').val(),
+        TenHang: $('#editTenHang').val(),
+        LoaiHang: $('#editLoaiHang').val(),
+        GiaBan: parseInt($('#editGiaBan').val()) || 0,
+        GiaVon: parseInt($('#editGiaVon').val()) || 0,
+        TonKho: parseInt($('#editTonKho').val()) || 0
+    };
+    
+    if(!data.TenHang){ alert('Vui lòng nhập Tên xe.'); return; }
+
+
+    $.ajax({
+        url:'/HangHoa/EditAjax',
+        type:'POST',
+        contentType:'application/json',
+        data:JSON.stringify(data),
+        success:function(res){
+            if(res.success){
+                $('#editItemModal').modal('hide');
+                // Tải lại DataTables để hiển thị thay đổi
+                table.ajax.reload(null, false); 
+                alert("Cập nhật xe thành công!");
+            } else alert("Cập nhật thất bại!");
+        },
+        error: function(xhr) { 
+            console.error("Lỗi AJAX EditAjax:", xhr.responseText);
+            alert('Lỗi Server khi cập nhật xe.'); 
+        }
+    });
+}
+
+// 4. Xóa Hàng Hóa (Sử dụng AJAX)
+function deleteItem(maHang, tenHang) {
+    if (!confirm(`Bạn có chắc chắn muốn xóa xe:\n\n Mã: ${maHang}\n Tên: ${tenHang}\n\nHành động này không thể hoàn tác!`)) {
+        return;
+    }
+
+    $.ajax({
+        url: '/HangHoa/DeleteAjax', // Gọi đến Action mới trong Controller
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ MaHang: maHang }), // Truyền MaHang dưới dạng JSON object
+        success: function (res) {
+            if (res.success) {
+                // Tải lại DataTables sau khi xóa thành công
+                table.ajax.reload(null, false);
+                alert(res.message); // Hiển thị thông báo thành công từ Controller
+            } else {
+                alert(`Xóa thất bại: ${res.message}`);
+            }
+        },
+        error: function (xhr) {
+            console.error("Lỗi AJAX Xóa:", xhr.responseText);
+            alert('Lỗi Server khi thực hiện xóa.');
+        }
+    });
+}
+
+// Hàm áp dụng tất cả các bộ lọc (Nhóm và Tồn kho)
+function applyFilter() {
+    const groupValue = $('#filterGroup').val();
+    // 1. Lọc theo Nhóm (LoaiHang) chính xác giá trị: ^value$
+    table.column(GROUP_COL).search(groupValue ? '^' + groupValue + '$' : '', true, false);
+
+    // 2. Kích hoạt lại draw() để chạy Custom Filter (Tồn kho)
+    table.draw();
+}
+
+$(document).ready(function(){
+    // Khởi tạo DataTable với cấu hình AJAX và COLUMNS
+    table = $('#itemTable').DataTable({
+        ajax:{
+            url: "/HangHoa/GetAllXe", // API lấy danh sách xe
+            dataSrc: "" 
+        },
+        columns:[
+            { data:"maHang", className:"text-center" },
+            { data:"tenHang", className:"text-start" },
+            { data:"loaiHang", className:"text-center" },
+            { data:"giaBan", className:"text-end" },
+            { data:"giaVon", className:"text-end" },
+            { data:"tonKho", className:"text-center" },
+            { data:"khachDat", className:"text-center" },
+            { data:"thoiGianTao", className:"text-center" },
+            { data:"datNCC", className:"text-center" },
+            { data:"maHang", orderable:false, searchable:false, className:"text-center",
+                render: (d, type, row) => `
+                    <div class="d-flex justify-content-center gap-2">
+                        <a href="javascript:void(0)" 
+                            onclick="openEditModal('${d}')" 
+                            class="btn btn-sm btn-warning text-white" title="Chỉnh sửa">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </a>
+                        <a href="javascript:void(0)" 
+                            onclick="deleteItem('${d}', '${row.tenHang.replace(/'/g, "\\'")}')" 
+                            class="btn btn-sm btn-danger" title="Xóa">
+                            <i class="fa-solid fa-trash"></i>
+                        </a>
+                    </div>
+                `
+            }
+        ],
+        dom:'rtip', 
+        order:[[STOCK_COL,'desc']],
+        language: {
+            sProcessing: "Đang xử lý...",
+            sLengthMenu: "Xem _MENU_ mục",
+            sZeroRecords: "Không tìm thấy xe nào phù hợp",
+            sInfo: "Hiển thị _START_ đến _END_ trong tổng số _TOTAL_ mục",
+            sInfoEmpty: "Hiển thị 0 đến 0 trong tổng số 0 mục",
+            sInfoFiltered: "(được lọc từ tổng số _MAX_ mục)",
+            sSearch: "Tìm kiếm:",
+            oPaginate: { sFirst:"Đầu", sLast:"Cuối", sNext:"Tiếp", sPrevious:"Trước" }
+        },
+        columnDefs: [
+            // Định dạng tiền tệ
+            { targets:[SELL_PRICE_COL,COST_PRICE_COL], render:function(data,type){ const num=parseInt(data)||0; return (type==='display'||type==='filter')?formatCurrency(num):num; }, className:'text-end' },
+            // Định dạng badge cho Nhóm xe (sử dụng style đồng bộ)
+            { targets:GROUP_COL, render:function(data,type){ if(type==='display') return `<span class="badge" style="background-color:#e0f7e0;color:#2b542c;padding:5px 8px;font-weight:500">${data}</span>`; return data; }, className:'text-center' },
+            // Cột Thao tác
+            { targets:9, orderable:false, searchable:false } 
+        ]
+    });
+
+
+    // Custom Filter TỒN KHO
+    $.fn.dataTable.ext.search.push(function(settings,data){
+        if(settings.nTable.id !== 'itemTable') return true;
+        const stockFilter = $('#filterStock').val();
+        const stock = parseInt(data[STOCK_COL])||0;
+
+        if(stockFilter==='available' && stock<=0) return false;
+        if(stockFilter==='outOfStock' && stock>0) return false;
+        return true;
+    });
+
+    // Event Handler (Gọi hàm applyFilter chung)
+    $('#filterGroup,#filterStock').on('change',()=>applyFilter());
+    
+    // Global search
+    $('#globalSearchBox').on('keyup',()=>table.search($('#globalSearchBox').val()).draw());
+});
+</script>

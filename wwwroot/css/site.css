@@ -1,0 +1,192 @@
+body {
+    background-color: #ace3ac;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.wrapper {
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 230px;
+    min-height: 100vh;
+    background-color: #62bb62dd; /* xanh bơ nhạt */
+}
+
+.sidebar h4 {
+    color: #2f5233;
+    font-weight: 600;
+}
+
+.sidebar .nav-link {
+    color: #2f5233;
+    transition: all 0.2s ease;
+}
+
+.sidebar .nav-link:hover {
+    background-color: #428446; /* xanh bơ đậm */
+    color: white;
+    border-radius: 6px;
+}
+
+/* Header */
+.header {
+    background-color: #6FBF73;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    color: #fafefa;
+    font-weight: 500;
+}
+
+/* Nút đăng xuất */
+.header .btn-outline-danger {
+    border-color: #e8eee8;
+    color: #e8f1e9;
+}
+
+.header .btn-outline-danger:hover {
+    background-color: #6FBF73;
+    color: white;
+}
+
+/* Thẻ card */
+.card {
+    border-radius: 10px;
+    border: none;
+}
+
+.card-header {
+    background-color: #6FBF73 !important;
+    color: white !important;
+    font-weight: 500;
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) {
+    background-color: rgba(111, 191, 115, 0.1);
+}
+
+.btn-warning {
+    background-color: #A8D5BA;
+    border: none;
+    color: #368e40;
+}
+
+.btn-warning:hover {
+    background-color: #0e330f;
+    color: white;
+}
+
+.btn-danger {
+    background-color: #e57373;
+    border: none;
+}
+
+.btn-danger:hover {
+    background-color: #c62828;
+}
+
+.content {
+    overflow-y: auto;
+}
+
+body {
+    background-color: #a5de9782;
+    background-size: center;
+    background-attachment: fixed;
+}
+
+/* ======= MENU CON TRONG SIDEBAR ======= */
+.sidebar .nav-item {
+    position: relative;
+}
+
+/* Ẩn submenu mặc định */
+.sidebar .submenu {
+    display: none;
+    background-color: #7ed87e7a;
+    margin: 3px 0 3px 10px;
+    border-left: 3px solid #428446;
+    border-radius: 5px;
+    padding-left: 8px;
+}
+
+/* Khi hover vào mục cha thì submenu hiện */
+.sidebar .nav-item:hover > .submenu {
+    display: block;
+}
+
+/* Khi submenu có submenu con, vẫn cho hover cấp 2 hoạt động */
+.sidebar .submenu .nav-item:hover > .submenu {
+    display: block;
+}
+
+/* Style cho liên kết trong submenu */
+.sidebar .submenu .nav-link {
+    color: #2f5233;
+    font-size: 0.9rem;
+    padding: 6px 10px;
+    border-radius: 5px;
+}
+
+.sidebar .submenu .nav-link:hover {
+    background-color: #428446;
+    color: white;
+}
+@media (max-width: 992px) {
+    /* Sidebar ẩn mặc định */
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 230px;
+        height: 100%;
+        background-color: #62bb62dd;
+        z-index: 1050;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease-in-out; /* 🔥 Thêm hiệu ứng trượt mượt hơn */
+        box-shadow: 3px 0 8px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Khi sidebar mở */
+    .sidebar.active {
+        transform: translateX(0);
+    }
+
+    /* Nội dung full width khi sidebar ẩn */
+    .content {
+        width: 100%;
+    }
+
+    /* Khi mở menu, ngăn cuộn toàn trang */
+    body.menu-open {
+        overflow: hidden;
+    }
+
+    /* Overlay nền mờ */
+    .sidebar-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.4);
+        z-index: 1040;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease;
+    }
+
+    /* Khi overlay đang bật */
+    .sidebar-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    /* Nút hamburger chỉ hiện ở mobile */
+    #menu-toggle {
+        display: inline-block;
+    }
+}

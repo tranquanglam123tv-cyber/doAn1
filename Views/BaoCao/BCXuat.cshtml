@@ -1,0 +1,439 @@
+@using Microsoft.AspNetCore.Http
+@{
+    ViewData["Title"] = "Xem Báo Cáo Xuất";
+    var user = Context.Session.GetString("User");
+}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+    /* AdminLTE custom styles */
+    .callout-success { border-left-color: #28a745; }
+    .bg-gradient-success { background: linear-gradient(135deg, #28a745, #1d6f34) !important; color: white; }
+    .card-success:not(.card-outline) > .card-header { background-color: #28a745; color: white; }
+    .card-outline.card-success { border-top: 3px solid #28a745; }
+    .badge.bg-success { background-color: #28a745 !important; }
+    .badge.bg-info { background-color: #17a2b8 !important; }
+    .badge.bg-warning { background-color: #ffc107 !important; color: black; }
+    .badge.bg-danger { background-color: #dc3545 !important; color: white; } /* Thêm badge danger cho trạng thái hủy */
+    .form-check-input:checked { background-color: #28a745; border-color: #28a745; }
+    
+    /* Cấu hình chung cho info-box */
+    .info-box {
+        border-radius: 6px;
+        box-shadow: 0 0 1px rgba(0,0,0,.125), 0 1px 3px rgba(0,0,0,.2);
+    }
+</style>
+
+<div class="container-fluid">
+
+    <div class="callout callout-success mb-4">
+        <h4 class="fw-semibold">
+            <i class="fas fa-shipping-fast mr-2"></i> Báo cáo xuất hàng
+        </h4>
+        <p class="mb-0">
+            Xin chào, **@(user ?? "Người dùng")**
+        </p>
+    </div>
+
+    <div class="row">
+        
+        <div class="col-md-3">
+            <div class="card card-outline card-success mb-4">
+                <div class="card-header">
+                    <h3 class="card-title fw-bold">Bộ lọc</h3>
+                </div>
+                <div class="card-body">
+                    <form id="filterForm"> 
+                        
+                        <div class="form-group mb-3 pt-2">
+                            <label class="form-label fw-semibold">Trạng thái</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="Status" value="Phiếu tạm" id="status1" checked>
+                                <label class="form-check-label" for="status1">Phiếu tạm</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="Status" value="Chờ xử lý" id="status2" checked>
+                                <label class="form-check-label" for="status2">Chờ xử lý</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="Status" value="Đang giao hàng" id="status4" checked>
+                                <label class="form-check-label" for="status4">Đang giao hàng</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="Status" value="Đã giao hàng" id="status5" checked>
+                                <label class="form-check-label" for="status5">Đã giao hàng</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="Status" value="Hoàn tất" id="status6" checked>
+                                <label class="form-check-label" for="status6">Hoàn tất</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="Status" value="Đã hủy" id="status3">
+                                <label class="form-check-label" for="status3">Đã hủy</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3 border-top pt-2">
+                            <label class="form-label fw-semibold">Thời gian</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="TimeFilter" id="time1" value="month" checked>
+                                <label class="form-check-label" for="time1">Tháng này</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="TimeFilter" id="time2" value="custom">
+                                <label class="form-check-label" for="time2">Tùy chỉnh</label>
+                            </div>
+                        </div>
+
+                        <div id="dateRange" style="display: none;" class="row mb-3">
+                            <div class="col-6">
+                                <label class="form-label small">Từ ngày</label>
+                                <input type="date" class="form-control form-control-sm" name="TuNgay">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small">Đến ngày</label>
+                                <input type="date" class="form-control form-control-sm" name="DenNgay">
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3 border-top pt-2">
+                            <label class="form-label fw-semibold">Khách hàng</label>
+                            <select class="form-control form-control-sm" name="KhachHang">
+                                <option value="all" selected>Tất cả</option>
+                                <option value="Khách Lẻ A">Khách Lẻ A</option>
+                                <option value="Đại lý B">Đại lý B</option>
+                                <option value="Chi nhánh C">Chi nhánh C</option>
+                            </select>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-success mt-2" onclick="applyFilters()">
+                                <i class="fas fa-filter"></i> Lọc báo cáo
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-9">
+
+            <div class="row mb-4">
+                <div class="col-md-4 col-sm-6 col-12">
+                    <div class="info-box bg-gradient-success">
+                        <span class="info-box-icon"><i class="fas fa-file-invoice"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">Tổng số phiếu xuất</span>
+                            <span class="info-box-number" id="totalPhieuXuat">12</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 col-12">
+                    <div class="info-box bg-gradient-success">
+                        <span class="info-box-icon"><i class="fas fa-money-bill-wave"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">Tổng giá trị xuất</span>
+                            <span class="info-box-number" id="totalGiaTriXuat">180,000,000 ₫</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 col-12">
+                    <div class="info-box bg-gradient-success">
+                        <span class="info-box-icon"><i class="fas fa-users"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">Số khách hàng tham gia</span>
+                            <span class="info-box-number" id="totalKH">3</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header bg-success">
+                    <h3 class="card-title text-white">Chi tiết phiếu xuất</h3>
+                    <div class="card-tools">
+                        <input type="text" id="tableSearch" class="form-control form-control-sm" placeholder="Tìm kiếm trong bảng...">
+                    </div>
+                </div>
+                <div class="card-body p-0 table-responsive">
+                    <table id="baoCaoXuatTable" class="table table-hover table-striped">
+                        <thead>
+                            <tr>
+                                <th>Mã phiếu</th>
+                                <th>Ngày xuất</th>
+                                <th>Khách hàng</th>
+                                <th>Tổng giá trị</th>
+                                <th>Trạng thái</th>
+                                <th>#</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>PX00125</td><td>03/11/2025</td><td>Khách Lẻ A</td><td>18,000,000</td><td><span class="badge bg-success">Hoàn tất</span></td><td><a href="#" class="text-info"><i class="fas fa-eye"></i></a></td></tr>
+                            <tr><td>PX00124</td><td>02/11/2025</td><td>Đại lý B</td><td>35,000,000</td><td><span class="badge bg-success">Đã giao hàng</span></td><td><a href="#" class="text-info"><i class="fas fa-eye"></i></a></td></tr>
+                            <tr><td>PX00123</td><td>01/11/2025</td><td>Chi nhánh C</td><td>20,000,000</td><td><span class="badge bg-warning">Đang giao hàng</span></td><td><a href="#" class="text-info"><i class="fas fa-eye"></i></a></td></tr>
+                            <tr><td>PX00122</td><td>31/10/2025</td><td>Khách Lẻ A</td><td>15,000,000</td><td><span class="badge bg-info">Chờ xử lý</span></td><td><a href="#" class="text-info"><i class="fas fa-eye"></i></a></td></tr>
+                            <tr><td>PX00121</td><td>30/10/2025</td><td>Đại lý B</td><td>10,000,000</td><td><span class="badge bg-danger">Đã hủy</span></td><td><a href="#" class="text-info"><i class="fas fa-eye"></i></a></td></tr>
+                            <tr><td>PX00120</td><td>29/10/2025</td><td>Khách Lẻ A</td><td>8,000,000</td><td><span class="badge bg-success">Hoàn tất</span></td><td><a href="#" class="text-info"><i class="fas fa-eye"></i></a></td></tr>
+                            <tr><td>PX00119</td><td>28/10/2025</td><td>Chi nhánh C</td><td>40,000,000</td><td><span class="badge bg-success">Đã giao hàng</span></td><td><a href="#" class="text-info"><i class="fas fa-eye"></i></a></td></tr>
+                            <tr><td>PX00118</td><td>27/10/2025</td><td>Khách Lẻ A</td><td>12,000,000</td><td><span class="badge bg-success">Hoàn tất</span></td><td><a href="#" class="text-info"><i class="fas fa-eye"></i></a></td></tr>
+                            <tr><td>PX00117</td><td>26/10/2025</td><td>Đại lý B</td><td>5,000,000</td><td><span class="badge bg-info">Chờ xử lý</span></td><td><a href="#" class="text-info"><i class="fas fa-eye"></i></a></td></tr>
+                            <tr><td>PX00116</td><td>25/10/2025</td><td>Chi nhánh C</td><td>7,000,000</td><td><span class="badge bg-warning">Đang giao hàng</span></td><td><a href="#" class="text-info"><i class="fas fa-eye"></i></a></td></tr>
+                            <tr><td>PX00115</td><td>24/10/2025</td><td>Đại lý B</td><td>5,000,000</td><td><span class="badge bg-success">Đã giao hàng</span></td><td><a href="#" class="text-info"><i class="fas fa-eye"></i></a></td></tr>
+                            <tr><td>PX00114</td><td>23/10/2025</td><td>Khách Lẻ A</td><td>5,000,000</td><td><span class="badge bg-info">Phiếu tạm</span></td><td><a href="#" class="text-info"><i class="fas fa-eye"></i></a></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card card-success card-outline">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-chart-bar mr-1"></i>
+                        Thống kê giá trị xuất theo khách hàng
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <canvas id="chartXuat" height="150"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 
+
+@section Scripts {
+    <script>
+        // Dữ liệu giả lập cho toàn bộ phiếu xuất
+        const allExports = [
+            { ma: 'PX00125', ngay: '03/11/2025', khachhang: 'Khách Lẻ A', chinhanh: 'CN Nguyễn Văn Cừ', giatri: 18000000, status: 'Hoàn tất' },
+            { ma: 'PX00124', ngay: '02/11/2025', khachhang: 'Đại lý B', chinhanh: 'CN Lê Lợi', giatri: 35000000, status: 'Đã giao hàng' },
+            { ma: 'PX00123', ngay: '01/11/2025', khachhang: 'Chi nhánh C', chinhanh: 'CN Quang Trung', giatri: 20000000, status: 'Đang giao hàng' },
+            { ma: 'PX00122', ngay: '31/10/2025', khachhang: 'Khách Lẻ A', chinhanh: 'CN Nguyễn Văn Cừ', giatri: 15000000, status: 'Chờ xử lý' },
+            { ma: 'PX00121', ngay: '30/10/2025', khachhang: 'Đại lý B', chinhanh: 'CN Lê Lợi', giatri: 10000000, status: 'Đã hủy' },
+            { ma: 'PX00120', ngay: '29/10/2025', khachhang: 'Khách Lẻ A', chinhanh: 'CN Quang Trung', giatri: 8000000, status: 'Hoàn tất' },
+            { ma: 'PX00119', ngay: '28/10/2025', khachhang: 'Chi nhánh C', chinhanh: 'CN Nguyễn Văn Cừ', giatri: 40000000, status: 'Đã giao hàng' },
+            { ma: 'PX00118', ngay: '27/10/2025', khachhang: 'Khách Lẻ A', chinhanh: 'CN Nguyễn Văn Cừ', giatri: 12000000, status: 'Hoàn tất' },
+            { ma: 'PX00117', ngay: '26/10/2025', khachhang: 'Đại lý B', chinhanh: 'CN Lê Lợi', giatri: 5000000, status: 'Chờ xử lý' },
+            { ma: 'PX00116', ngay: '25/10/2025', khachhang: 'Chi nhánh C', chinhanh: 'CN Quang Trung', giatri: 7000000, status: 'Đang giao hàng' },
+            { ma: 'PX00115', ngay: '24/10/2025', khachhang: 'Đại lý B', chinhanh: 'CN Nguyễn Văn Cừ', giatri: 5000000, status: 'Đã giao hàng' },
+            { ma: 'PX00114', ngay: '23/10/2025', khachhang: 'Khách Lẻ A', chinhanh: 'CN Lê Lợi', giatri: 5000000, status: 'Phiếu tạm' },
+        ];
+        
+        let chartXuatInstance;
+
+        // Hàm chuyển đổi định dạng ngày DD/MM/YYYY sang Date object
+        function parseDate(str) {
+            const parts = str.split('/');
+            // new Date(year, monthIndex, day)
+            return new Date(parts[2], parts[1] - 1, parts[0]); 
+        }
+
+        // Hàm định dạng tiền tệ
+        function formatCurrency(number) {
+            return new Intl.NumberFormat('vi-VN').format(number);
+        }
+
+        // Hàm chuyển đổi trạng thái sang badge
+        function getStatusBadge(status) {
+            let className = '';
+            switch(status) {
+                case 'Hoàn tất':
+                case 'Đã giao hàng':
+                    className = 'bg-success';
+                    break;
+                case 'Chờ xử lý':
+                case 'Phiếu tạm':
+                    className = 'bg-info';
+                    break;
+                case 'Đang giao hàng':
+                    className = 'bg-warning';
+                    break;
+                case 'Đã hủy':
+                    className = 'bg-danger';
+                    break;
+                default:
+                    className = 'bg-secondary';
+            }
+            return `<span class="badge ${className}">${status}</span>`;
+        }
+
+        // --- HÀM RENDER DỮ LIỆU ---
+        function renderData(data) {
+            const tbody = document.querySelector('#baoCaoXuatTable tbody');
+            tbody.innerHTML = '';
+            
+            let totalGiaTri = 0;
+            const uniqueKH = new Set();
+            
+            data.forEach(report => {
+                totalGiaTri += report.giatri;
+                uniqueKH.add(report.khachhang); // Sử dụng 'khachhang'
+                
+                // RENDER các cột (Mã phiếu, Ngày xuất, Khách hàng, Tổng giá trị, Trạng thái)
+                const row = `
+                    <tr>
+                        <td>${report.ma}</td>
+                        <td>${report.ngay}</td>
+                        <td>${report.khachhang}</td>
+                        <td>${formatCurrency(report.giatri)}</td>
+                        <td>${getStatusBadge(report.status)}</td>
+                        <td><a href="#" class="text-info"><i class="fas fa-eye"></i></a></td>
+                    </tr>
+                `;
+                tbody.insertAdjacentHTML('beforeend', row);
+            });
+            
+            // Cập nhật các Info Box
+            document.getElementById('totalPhieuXuat').textContent = data.length;
+            document.getElementById('totalGiaTriXuat').textContent = formatCurrency(totalGiaTri) + ' ₫';
+            document.getElementById('totalKH').textContent = uniqueKH.size;
+            
+            updateChart(data);
+        }
+        
+        // --- HÀM ÁP DỤNG LỌC ---
+        function applyFilters() {
+            const form = document.getElementById('filterForm');
+            const statusCheckboxes = Array.from(form.querySelectorAll('[name="Status"]:checked')).map(cb => cb.value);
+            const timeFilter = form.querySelector('[name="TimeFilter"]:checked').value;
+            const tuNgay = form.querySelector('[name="TuNgay"]').value;
+            const denNgay = form.querySelector('[name="DenNgay"]').value;
+            const khachHang = form.querySelector('[name="KhachHang"]').value; // Đã đổi tên thành KhachHang
+            
+            const tableSearch = document.getElementById('tableSearch').value.toLowerCase();
+
+
+            const filteredReports = allExports.filter(report => {
+                
+                // 1. Lọc theo Khách hàng
+                if (khachHang !== 'all' && report.khachhang !== khachHang) return false;
+                
+                // 2. Lọc theo Trạng thái
+                if (statusCheckboxes.length > 0 && !statusCheckboxes.includes(report.status)) return false;
+
+                // 3. Lọc theo Thời gian
+                const reportDate = parseDate(report.ngay);
+                if (timeFilter === 'custom') {
+                    if (tuNgay) {
+                        const start = new Date(tuNgay);
+                        if (reportDate < start) return false;
+                    }
+                    if (denNgay) {
+                        const end = new Date(denNgay);
+                        end.setDate(end.getDate() + 1); 
+                        if (reportDate >= end) return false;
+                    }
+                } else if (timeFilter === 'month') {
+                    // Logic lọc Tháng này (giả định đang là T11/2025)
+                    const now = new Date();
+                    const currentMonth = now.getMonth();
+                    const currentYear = now.getFullYear();
+                    
+                    if (reportDate.getMonth() !== currentMonth || reportDate.getFullYear() !== currentYear) {
+                        const isNovember2025 = reportDate.getMonth() === 10 && reportDate.getFullYear() === 2025;
+                        if (!isNovember2025) return false; 
+                    }
+                }
+                
+                // 4. Lọc theo ô tìm kiếm (Mã phiếu, Tên KH, Tên Chi nhánh)
+                if (tableSearch) {
+                    const searchTarget = `${report.ma} ${report.khachhang} ${report.chinhanh} ${report.status}`.toLowerCase();
+                    if (!searchTarget.includes(tableSearch)) return false;
+                }
+                
+                return true;
+            });
+
+            renderData(filteredReports);
+        }
+
+        // --- HÀM CẬP NHẬT BIỂU ĐỒ ---
+        function updateChart(data) {
+            const khData = data.reduce((acc, report) => {
+                acc[report.khachhang] = (acc[report.khachhang] || 0) + report.giatri;
+                return acc;
+            }, {});
+
+            const labels = Object.keys(khData);
+            const values = Object.values(khData);
+            
+            if (chartXuatInstance) {
+                chartXuatInstance.data.labels = labels;
+                chartXuatInstance.data.datasets[0].data = values;
+                chartXuatInstance.update();
+            }
+        }
+        
+        // --- KHỞI TẠO BIỂU ĐỒ VÀ SỰ KIỆN ---
+        document.addEventListener('DOMContentLoaded', function() {
+            // Ẩn/hiện bộ lọc ngày tùy chỉnh
+            const radioButtons = document.querySelectorAll('input[name="TimeFilter"]');
+            const dateRangeDiv = document.getElementById('dateRange');
+
+            radioButtons.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.value === 'custom') {
+                        dateRangeDiv.style.display = 'flex';
+                    } else {
+                        dateRangeDiv.style.display = 'none';
+                    }
+                });
+            });
+            
+            // Xử lý tìm kiếm trong bảng
+            document.getElementById('tableSearch').addEventListener('keyup', function() {
+                applyFilters(); 
+            });
+
+            // Khởi tạo biểu đồ
+            const ctx = document.getElementById('chartXuat').getContext('2d');
+            chartXuatInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [], // Sẽ được cập nhật bằng JS
+                    datasets: [{
+                        label: 'Giá trị xuất (VND)',
+                        data: [], // Sẽ được cập nhật bằng JS
+                        backgroundColor: '#28a745', 
+                        borderColor: '#218838',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value, index, values) {
+                                    return formatCurrency(value) + ' ₫'; // Định dạng tiền tệ cho trục Y
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += formatCurrency(context.parsed.y) + ' ₫';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Lần đầu tải trang: áp dụng bộ lọc mặc định ('Tháng này')
+            applyFilters();
+        });
+    </script>
+}

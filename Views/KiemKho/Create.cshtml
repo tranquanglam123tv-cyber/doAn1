@@ -1,0 +1,223 @@
+@{
+    ViewBag.Title = "Thêm phiếu kiểm kho";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid p-3">
+    <!-- Header -->
+    <div class="d-flex align-items-center mb-3">
+        <a href="@Url.Action("Index", "KiemKho")" class="text-dark me-2">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h5 class="fw-bold mb-0 me-3">Kiểm kho</h5>
+
+        <div class="input-group w-50">
+            <span class="input-group-text bg-light border-end-0">
+                <i class="bi bi-search"></i>
+            </span>
+            <input type="text" class="form-control border-start-0" placeholder="Tìm hàng hóa theo mã hoặc tên (F3)">
+            <button id="btnOpenAddProduct" class="btn btn-outline-primary">
+                <i class="bi bi-plus"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-3">
+        <li class="nav-item"><a class="nav-link active" href="#">Tất cả (0)</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">Khớp (0)</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">Lệch (0)</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">Chưa kiểm (0)</a></li>
+    </ul>
+
+    <div class="row">
+        <!-- Bảng sản phẩm -->
+        <div class="col-md-8">
+            <div class="bg-white border rounded p-3 shadow-sm">
+                <table class="table table-hover align-middle mb-0" id="productTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>STT</th>
+                            <th>Mã hàng</th>
+                            <th>Tên hàng</th>
+                            <th>ĐVT</th>
+                            <th>Tồn kho</th>
+                            <th>Thực tế</th>
+                            <th>SL lệch</th>
+                            <th>Giá trị lệch</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productTableBody">
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <div>
+                                    <p class="fw-semibold mb-1">Thêm sản phẩm từ file excel</p>
+                                    <p class="small text-secondary mb-3">
+                                        (Tải về file mẫu:
+                                        <a href="#" class="text-primary text-decoration-none">Excel file</a>)
+                                    </p>
+                                    <form id="uploadForm" enctype="multipart/form-data" method="post">
+    <input type="file" id="fileInput" name="file" class="d-none" accept=".xlsx,.xls" />
+    <button type="button" class="btn btn-primary" id="btnSelectFile">
+        <i class="bi bi-upload"></i> Chọn file dữ liệu
+    </button>
+</form>
+
+<script>
+    document.getElementById("btnSelectFile").addEventListener("click", function () {
+        document.getElementById("fileInput").click();
+    });
+
+    // Khi người dùng chọn file
+    document.getElementById("fileInput").addEventListener("change", function () {
+        if (this.files.length > 0) {
+            const fileName = this.files[0].name;
+            alert("Đã chọn file: " + fileName);
+            // Bạn có thể gọi Ajax hoặc submit form ở đây nếu muốn upload file
+            // document.getElementById("uploadForm").submit();
+        }
+    });
+</script>
+
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Thông tin bên phải -->
+        <div class="col-md-4">
+            <div class="bg-white border rounded p-3 shadow-sm mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span><i class="bi bi-person-circle me-2"></i><strong>QUỐC TRÍ</strong></span>
+                    <span class="text-secondary">@DateTime.Now.ToString("dd/MM/yyyy HH:mm")</span>
+                </div>
+
+                <div class="mb-2">
+                    <label class="form-label fw-semibold">Mã kiểm kho</label>
+                    <input type="text" class="form-control" value="Mã phiếu tự động" readonly />
+                </div>
+
+                <div class="mb-2">
+                    <label class="form-label fw-semibold">Trạng thái</label>
+                    <input type="text" class="form-control" value="Phiếu tạm" readonly />
+                </div>
+
+                <div class="mb-2">
+                    <label class="form-label fw-semibold">Tổng SL thực tế</label>
+                    <input type="text" class="form-control" value="0" readonly />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Ghi chú</label>
+                    <textarea class="form-control" rows="2" placeholder="Ghi chú"></textarea>
+                </div>
+
+                <div class="bg-light p-2 rounded">
+                    <h6 class="fw-bold mb-2">Kiểm gần đây</h6>
+                    <p class="text-secondary mb-0 small">(Chưa có dữ liệu)</p>
+                </div>
+            </div>
+
+            <!-- Nút hành động -->
+            <div class="d-flex justify-content-between">
+                <button class="btn btn-primary w-50 me-2">
+                    <i class="bi bi-save"></i> Lưu tạm
+                </button>
+                <button class="btn btn-success w-50">
+                    <i class="bi bi-check2-circle"></i> Hoàn thành
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 🔹 Modal thêm sản phẩm -->
+<div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addProductModalLabel">Thêm sản phẩm vào kiểm kho</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Mã hàng</label>
+                    <input type="text" class="form-control" id="productCode">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Tên hàng</label>
+                    <input type="text" class="form-control" id="productName">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Đơn vị tính</label>
+                    <input type="text" class="form-control" id="productUnit" placeholder="VD: Cái, chiếc...">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Tồn kho</label>
+                    <input type="number" class="form-control" id="stockQty">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Thực tế</label>
+                    <input type="number" class="form-control" id="realQty">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-success" id="btnSaveProduct">Lưu</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const addBtn = document.getElementById("btnOpenAddProduct");
+    const modal = new bootstrap.Modal(document.getElementById("addProductModal"));
+    const saveBtn = document.getElementById("btnSaveProduct");
+    const tableBody = document.getElementById("productTableBody");
+
+    addBtn.addEventListener("click", function () {
+        modal.show();
+    });
+
+    saveBtn.addEventListener("click", function () {
+        const code = document.getElementById("productCode").value.trim();
+        const name = document.getElementById("productName").value.trim();
+        const unit = document.getElementById("productUnit").value.trim();
+        const stock = document.getElementById("stockQty").value;
+        const real = document.getElementById("realQty").value;
+
+        if (!code || !name) {
+            alert("Vui lòng nhập mã hàng và tên hàng!");
+            return;
+        }
+
+        const diff = real - stock;
+        const newRow = `
+            <tr>
+                <td>${tableBody.rows.length + 1}</td>
+                <td>${code}</td>
+                <td>${name}</td>
+                <td>${unit || '-'}</td>
+                <td>${stock || 0}</td>
+                <td>${real || 0}</td>
+                <td class="${diff == 0 ? 'text-success' : 'text-danger'}">${diff}</td>
+                <td>-</td>
+            </tr>`;
+
+        tableBody.insertAdjacentHTML("beforeend", newRow);
+        modal.hide();
+
+        document.getElementById("productCode").value = "";
+        document.getElementById("productName").value = "";
+        document.getElementById("productUnit").value = "";
+        document.getElementById("stockQty").value = "";
+        document.getElementById("realQty").value = "";
+    });
+});
+</script>
+}

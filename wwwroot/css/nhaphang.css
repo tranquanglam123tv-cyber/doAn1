@@ -1,0 +1,77 @@
+/* ===== Sidebar ===== */
+.filter-panel {
+    width: 250px;
+    background: #f8f9fa;
+    border-right: 1px solid #ddd;
+    flex-shrink: 0;
+    transition: transform 0.3s ease;
+    padding: 15px;
+    height: 100vh;
+    overflow-y: auto;
+    z-index: 1050;
+}
+
+/* Overlay */
+.filter-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.4);
+    z-index: 1040;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease;
+}
+
+/* Active state */
+.filter-panel.active {
+    transform: translateX(0);
+}
+.filter-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Nút toggle hamburger */
+#filter-toggle {
+    position: relative;
+    z-index: 1100; /* luôn trên overlay */
+}
+
+/* Ẩn nút filter khi filter mở hoặc menu chính mở */
+body.menu-open-main #filter-toggle,
+body.menu-open-filter #filter-toggle {
+    display: none !important;
+}
+
+/* Mobile responsive */
+@media (max-width: 992px) {
+    .filter-panel {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100%;
+        transform: translateX(-100%);
+        z-index: 1050;
+        box-shadow: 3px 0 8px rgba(0,0,0,0.3);
+    }
+
+    .filter-panel.active {
+        transform: translateX(0);
+    }
+
+    .content {
+        width: 100%;
+    }
+
+    body.menu-open-filter {
+        overflow: hidden;
+    }
+
+    #filter-toggle {
+        display: inline-block;
+        margin-bottom: 10px;
+    }
+}
