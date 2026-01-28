@@ -4718,11 +4718,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\ADMIN'\\OneDrive\\Nam3HK1\\DoAn1\\QuanLyKho-main\\QuanLyKho.csproj",
+      "projectUniqueName": "C:\\Users\\ADMIN'\\OneDrive\\Nam3HK1\\DoAn1\\BaoCao(WorldandCode)\\QuanLyKho-main\\QuanLyKho.csproj",
       "projectName": "QuanLyKho",
-      "projectPath": "C:\\Users\\ADMIN'\\OneDrive\\Nam3HK1\\DoAn1\\QuanLyKho-main\\QuanLyKho.csproj",
+      "projectPath": "C:\\Users\\ADMIN'\\OneDrive\\Nam3HK1\\DoAn1\\BaoCao(WorldandCode)\\QuanLyKho-main\\QuanLyKho.csproj",
       "packagesPath": "C:\\Users\\ADMIN'\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\ADMIN'\\OneDrive\\Nam3HK1\\DoAn1\\QuanLyKho-main\\obj\\",
+      "outputPath": "C:\\Users\\ADMIN'\\OneDrive\\Nam3HK1\\DoAn1\\BaoCao(WorldandCode)\\QuanLyKho-main\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -4755,7 +4755,7 @@
         "auditLevel": "low",
         "auditMode": "direct"
       },
-      "SdkAnalysisLevel": "9.0.300"
+      "SdkAnalysisLevel": "10.0.100"
     },
     "frameworks": {
       "net9.0": {
@@ -4801,7 +4801,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.304/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.101/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

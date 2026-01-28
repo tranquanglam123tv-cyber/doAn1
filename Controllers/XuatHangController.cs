@@ -28,6 +28,7 @@ namespace QuanLyKho.Controllers
                                             .OrderByDescending(px => px.NgayXuat)
                                             .Include(px => px.ChiTietPhieuXuat)
                                             .ToList();
+                                            ViewData["Suppliers"] = _context.NCCs.ToList();
             return View(danhSachPhieuXuat); 
         }
         [HttpGet]

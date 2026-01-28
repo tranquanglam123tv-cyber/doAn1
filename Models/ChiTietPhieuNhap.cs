@@ -12,7 +12,8 @@ namespace QuanLyKho.Models
 
         [Required]
         [Column(TypeName = "varchar(20)")]
-        public string MaPN { get; set; } 
+        public string MaPN { get; set; }
+        
         public HangHoa HangHoa { get; set; } 
 
         [ForeignKey("MaPN")]

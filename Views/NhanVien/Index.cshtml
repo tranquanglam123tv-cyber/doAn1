@@ -74,11 +74,9 @@
 <section class="content">
     <div class="container-fluid">
 
-        <!-- HÀNG 1: 4 TÁC VỤ CHÍNH TRÊN MỘT HÀNG NGANG (col-lg-3) -->
         <div class="row">
 
-            <!-- CARD 1: Nhập kho -->
-            <div class="col-lg-3 col-md-6 col-sm-12 mb-3">
+            <div class="col-lg-4 col-md-6 col-sm-12 mb-3">
                 <div class="card card-outline card-uniform shadow action-card-min-height custom-card-hover d-flex flex-column">
                     <a href="@Url.Action("index","NhapHang")" class="text-decoration-none d-flex flex-column card-link-fill">
                         <div class="card-body d-flex align-items-center p-3 flex-grow-1">
@@ -97,8 +95,7 @@
                 </div>
             </div>
 
-            <!-- CARD 2: Xuất kho -->
-            <div class="col-lg-3 col-md-6 col-sm-12 mb-3">
+            <div class="col-lg-4 col-md-6 col-sm-12 mb-3">
                 <div class="card card-outline card-uniform shadow action-card-min-height custom-card-hover d-flex flex-column">
                     <a href="@Url.Action("index","XuatHang")" class="text-decoration-none d-flex flex-column card-link-fill">
                         <div class="card-body d-flex align-items-center p-3 flex-grow-1">
@@ -117,28 +114,7 @@
                 </div>
             </div>
 
-            <!-- CARD 3: Chuyển kho -->
-            <div class="col-lg-3 col-md-6 col-sm-12 mb-3">
-                <div class="card card-outline card-uniform shadow action-card-min-height custom-card-hover d-flex flex-column">
-                    <a href="@Url.Action("Index","KhoHang")" class="text-decoration-none d-flex flex-column card-link-fill">
-                        <div class="card-body d-flex align-items-center p-3 flex-grow-1">
-                            <div class="mr-3">
-                                <i class="fas fa-dolly uniform-color" style="font-size: 3rem;"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-weight-bold uniform-color mb-0">CHUYỂN KHO</h4>
-                                <p class="text-muted mb-0">Thực hiện luân chuyển hàng hóa giữa các kho.</p>
-                            </div>
-                        </div>
-                        <div class="card-footer text-center bg-uniform" style="padding: 10px 0;">
-                            <span class="text-white font-weight-bold">Đi tới <i class="fas fa-arrow-circle-right ml-2"></i></span>
-                        </div>
-                    </a>
-                </div>
-            </div>
-
-            <!-- CARD 4: Kiểm kho -->
-            <div class="col-lg-3 col-md-6 col-sm-12 mb-3">
+            <div class="col-lg-4 col-md-6 col-sm-12 mb-3">
                 <div class="card card-outline card-uniform shadow action-card-min-height custom-card-hover d-flex flex-column">
                     <a href="@Url.Action("Index","KiemKho")" class="text-decoration-none d-flex flex-column card-link-fill">
                         <div class="card-body d-flex align-items-center p-3 flex-grow-1">
@@ -146,8 +122,8 @@
                                 <i class="fas fa-clipboard-check uniform-color" style="font-size: 3rem;"></i>
                             </div>
                             <div>
-                                <h4 class="font-weight-bold uniform-color mb-0">KIỂM KHO</h4>
-                                <p class="text-muted mb-0">Lên lịch và thực hiện các đợt kiểm kê hàng hóa.</p>
+                                <h4 class="font-weight-bold uniform-color mb-0">ĐẶT HÀNG</h4>
+                                <p class="text-muted mb-0">Lên lịch và thực hiện các đợt bổ sung hàng hóa.</p>
                             </div>
                         </div>
                         <div class="card-footer text-center bg-uniform" style="padding: 10px 0;">
@@ -156,9 +132,9 @@
                     </a>
                 </div>
             </div>
-        </div>
+            
+            </div>
     </div>
 </section>
-
 @section Scripts {
 }

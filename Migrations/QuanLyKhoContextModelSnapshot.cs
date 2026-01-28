@@ -60,6 +60,9 @@ namespace QuanLyKho.Migrations
                     b.Property<decimal>("DonGiaNhap")
                         .HasColumnType("decimal(18,0)");
 
+                    b.Property<int>("HangHoaId")
+                        .HasColumnType("int");
+
                     b.Property<string>("MaHH")
                         .IsRequired()
                         .HasColumnType("varchar(20)");
@@ -76,7 +79,7 @@ namespace QuanLyKho.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("MaHH");
+                    b.HasIndex("HangHoaId");
 
                     b.HasIndex("MaPN");
 
@@ -122,8 +125,7 @@ namespace QuanLyKho.Migrations
 
                     b.Property<string>("MaNCC")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("varchar(20)");
 
                     b.Property<DateTime>("NgayNhapDuKien")
                         .HasColumnType("datetime2");
@@ -140,7 +142,7 @@ namespace QuanLyKho.Migrations
                     b.Property<string>("TrangThai")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(50)");
 
                     b.HasKey("MaPhieuDat");
 
@@ -165,7 +167,7 @@ namespace QuanLyKho.Migrations
 
                     b.Property<string>("TrangThai")
                         .IsRequired()
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("varchar(50)");
 
                     b.Property<string>("ViTri")
                         .IsRequired()
@@ -224,9 +226,6 @@ namespace QuanLyKho.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("MaHang")
-                        .IsUnique();
 
                     b.ToTable("HangHoas");
                 });
@@ -302,8 +301,7 @@ namespace QuanLyKho.Migrations
             modelBuilder.Entity("QuanLyKho.Models.NCC", b =>
                 {
                     b.Property<string>("MaNCC")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("varchar(20)");
 
                     b.Property<string>("DienThoai")
                         .IsRequired()
@@ -315,7 +313,7 @@ namespace QuanLyKho.Migrations
                     b.Property<string>("TenNCC")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<decimal>("TongMua")
                         .HasColumnType("decimal(18, 0)");
@@ -323,6 +321,34 @@ namespace QuanLyKho.Migrations
                     b.HasKey("MaNCC");
 
                     b.ToTable("NhaCungCap");
+                });
+
+            modelBuilder.Entity("QuanLyKho.Models.NhapHang", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("DonGia")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("HangHoaId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("NgayNhap")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("SoLuong")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HangHoaId");
+
+                    b.ToTable("NhapHangs");
                 });
 
             modelBuilder.Entity("QuanLyKho.Models.PhieuNhap", b =>
@@ -347,6 +373,9 @@ namespace QuanLyKho.Migrations
                     b.Property<DateTime?>("NgayNhap")
                         .HasColumnType("date");
 
+                    b.Property<string>("NhanVienMaNV")
+                        .HasColumnType("varchar(20)");
+
                     b.Property<decimal?>("TongGiaTri")
                         .HasColumnType("decimal(18,0)");
 
@@ -354,11 +383,11 @@ namespace QuanLyKho.Migrations
 
                     b.HasIndex("MaNCC");
 
-                    b.HasIndex("MaNV");
-
                     b.HasIndex("MaPhieuDat")
                         .IsUnique()
                         .HasFilter("[MaPhieuDat] IS NOT NULL");
+
+                    b.HasIndex("NhanVienMaNV");
 
                     b.ToTable("PhieuNhap");
                 });
@@ -398,8 +427,7 @@ namespace QuanLyKho.Migrations
                 {
                     b.HasOne("QuanLyKho.Models.HangHoa", "HangHoa")
                         .WithMany()
-                        .HasForeignKey("MaHH")
-                        .HasPrincipalKey("MaHang")
+                        .HasForeignKey("HangHoaId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -447,6 +475,17 @@ namespace QuanLyKho.Migrations
                     b.Navigation("HangHoa");
                 });
 
+            modelBuilder.Entity("QuanLyKho.Models.NhapHang", b =>
+                {
+                    b.HasOne("QuanLyKho.Models.HangHoa", "HangHoa")
+                        .WithMany()
+                        .HasForeignKey("HangHoaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("HangHoa");
+                });
+
             modelBuilder.Entity("QuanLyKho.Models.PhieuNhap", b =>
                 {
                     b.HasOne("QuanLyKho.Models.NCC", "NhaCungCap")
@@ -455,15 +494,13 @@ namespace QuanLyKho.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("QuanLyKho.Models.Employee", "NhanVien")
-                        .WithMany()
-                        .HasForeignKey("MaNV")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("QuanLyKho.Models.DatHangNhap", "DatHang")
                         .WithOne("PhieuNhap")
                         .HasForeignKey("QuanLyKho.Models.PhieuNhap", "MaPhieuDat");
+
+                    b.HasOne("QuanLyKho.Models.Employee", "NhanVien")
+                        .WithMany()
+                        .HasForeignKey("NhanVienMaNV");
 
                     b.Navigation("DatHang");
 

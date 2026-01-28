@@ -18,6 +18,6 @@ namespace QuanLyKho.Models
 
         [MaxLength(50)]
         public string? Role { get; set; } 
-    
+
     }
 }

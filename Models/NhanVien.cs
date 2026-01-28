@@ -1,3 +1,4 @@
+// File: NhanVien.cs (Đổi tên thành Employee.cs để khớp với nội dung cũ)
 
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -13,17 +14,17 @@ public class Employee
 
     [Required]
     [MaxLength(100)]
-    [Column(TypeName = "nvarchar(100)")]
     public string TenNV { get; set; }
 
+    // ⭐️ THÊM: Vị trí (Position)
     [MaxLength(100)]
-    [Column(TypeName = "nvarchar(100)")]
     public string ViTri { get; set; } 
 
+    // ⭐️ THÊM: Điện thoại (Phone)
     [Column(TypeName = "varchar(20)")]
     public string DienThoai { get; set; } 
 
     [Required]
-    [Column(TypeName = "nvarchar(100)")]
-    public string TrangThai { get; set; } 
+    [Column(TypeName = "varchar(50)")]
+    public string TrangThai { get; set; } // 'Hoạt động', 'Tạm khóa', v.v.
 }

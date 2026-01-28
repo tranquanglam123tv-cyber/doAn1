@@ -1,4 +1,3 @@
-
 using Microsoft.AspNetCore.Mvc;
 using QuanLyKho.Models;
 using System;
@@ -7,6 +6,7 @@ using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http;
+using System.Transactions; // Cần dùng để quản lý Transaction thủ công nếu không dùng transaction của EF Core
 
 namespace QuanLyKho.Controllers
 {
@@ -25,7 +25,7 @@ namespace QuanLyKho.Controllers
         public IActionResult Index()
         {
             var phieuNhaps = _context.PhieuNhaps
-            .Include(p => p.NhaCungCap)
+            .Include(p => p.NhaCungCap) // Đổi tên thành NCC nếu không khớp
             .Include(p => p.NhanVien)
             .OrderByDescending(px => px.NgayNhap)
             .ToList();
@@ -37,38 +37,41 @@ namespace QuanLyKho.Controllers
         // =========================================================
         public IActionResult Create()
         {
-            ViewBag.NhaCungCaps = _context.NCCs.ToList();
+            ViewBag.NhaCungCaps = _context.NCCs.ToList(); // Đảm bảo tên Entity là NCCs
             return View(new PhieuNhapCreateModel()); 
         }
 
         // =========================================================
         // 3. ACTION CREATE (POST) - Thêm phiếu nhập và cập nhật tồn kho/giá vốn
+        // SỬ DỤNG DB TRANSACTION ĐỂ ĐẢM BẢO TÍNH TOÀN VẸN
         // =========================================================
         [HttpPost]
         public IActionResult Create([FromBody] PhieuNhapCreateModel model)
         {
-            
-            // Dù request là JSON, vẫn nên kiểm tra cơ bản
             if (model == null || model.ChiTiet == null || !model.ChiTiet.Any())
             {
                 return Json(new { success = false, message = "Dữ liệu phiếu nhập không được trống." });
             }
 
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Where(x => x.Value.Errors.Any()).Select(x => new { x.Key, x.Value.Errors }).ToList();
+                return Json(new { success = false, message = "Dữ liệu đầu vào không hợp lệ.", errors = errors });
+            }
+
+            // Bắt đầu Transaction để đảm bảo tất cả thay đổi được lưu hoặc không lưu
+            using (var transaction = _context.Database.BeginTransaction())
             {
                 try
                 {
-                    // TÍNH TOÁN TỔNG GIÁ TRỊ PHIẾU NHẬP TRÊN SERVER (Đảm bảo tính nhất quán)
+                    // TÍNH TOÁN TỔNG GIÁ TRỊ PHIẾU NHẬP TRÊN SERVER
                     decimal totalCalculated = model.ChiTiet.Sum(ct => ct.Sl * ct.Dg); 
 
-                    // ----------------------------------------------------
-                    // LƯU Ý: Nếu hệ thống xác thực chưa có hoặc trả về null, sử dụng giá trị mặc định "MANV001".
                     string maNhanVien = User.Identity.Name; 
                     if (string.IsNullOrEmpty(maNhanVien))
                     {
-                        maNhanVien = "MANV001"; // Giá trị MaNV mặc định/tạm thời (PHẢI TỒN TẠI TRONG BẢNG NhanVien)
+                        maNhanVien = "E0013"; 
                     }
-                    // ----------------------------------------------------
 
                     // 1. Tự động tạo mã PN mới (Ví dụ: PN0001)
                     var lastMaPN = _context.PhieuNhaps.OrderByDescending(p => p.MaPN).Select(p => p.MaPN).FirstOrDefault();
@@ -79,12 +82,9 @@ namespace QuanLyKho.Controllers
 
                     // 2. Parse Ngày Nhập
                     DateTime? ngayNhapValue = null;
-                    if (!string.IsNullOrEmpty(model.NgayNhap))
+                    if (!string.IsNullOrEmpty(model.NgayNhap) && DateTime.TryParseExact(model.NgayNhap, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out DateTime parsedDate))
                     {
-                        if (DateTime.TryParseExact(model.NgayNhap, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out DateTime parsedDate))
-                        {
-                            ngayNhapValue = parsedDate.Date;
-                        }
+                        ngayNhapValue = parsedDate.Date;
                     }
                     
                     // 3. Tạo đối tượng PhieuNhap
@@ -93,9 +93,10 @@ namespace QuanLyKho.Controllers
                         MaPN = newMaPN, 
                         MaNCC = model.MaNCC, 
                         NgayNhap = ngayNhapValue.HasValue ? ngayNhapValue.Value : DateTime.Now.Date,
-                        TongGiaTri = totalCalculated, // <<< SỬ DỤNG GIÁ TRỊ TÍNH TOÁN TỪ SERVER
+                        TongGiaTri = totalCalculated,
                         GhiChu = model.GhiChu,
-                        MaNV = maNhanVien
+                        MaNV = maNhanVien,
+
                     };
                     _context.PhieuNhaps.Add(phieuNhap);
                     
@@ -106,29 +107,20 @@ namespace QuanLyKho.Controllers
                         
                         if (hangHoa != null)
                         {
-                            // Cập nhật tồn kho
+                            // Cập nhật tồn kho và Giá Vốn (LIC)
                             hangHoa.TonKho += chiTietDto.Sl;
-                            
-                            // Cập nhật giá vốn - LƯU Ý: Đây là phương pháp Giá Vốn Nhập Sau Cùng (LIC)
                             hangHoa.GiaVon = chiTietDto.Dg; 
-                            
-                            // Nếu muốn dùng Giá Vốn Trung Bình, cần tính toán phức tạp hơn:
-                            // decimal oldTotalCost = hangHoa.TonKho * hangHoa.GiaVon;
-                            // decimal newTotalCost = oldTotalCost + (chiTietDto.Sl * chiTietDto.Dg);
-                            // hangHoa.GiaVon = newTotalCost / (hangHoa.TonKho + chiTietDto.Sl);
-
                             _context.HangHoas.Update(hangHoa);
                         }
                         else
                         {
                             // Hàng hóa CHƯA TỒN TẠI: TẠO MỚI bản ghi HangHoa
-                            // LƯU Ý: Nên có logic kiểm tra tính hợp lệ của MaHang, TenHang nếu nó được điền từ form.
                             hangHoa = new HangHoa 
                             {
                                 MaHang = chiTietDto.MaHH,
-                                TenHang = "Hàng hóa mới: " + chiTietDto.MaHH, 
+                                TenHang = chiTietDto.MaHH, // Đặt tên tạm là Mã hàng (cần sửa lại sau)
                                 LoaiHang = "Chưa rõ", 
-                                GiaBan = chiTietDto.Dg * 1.2M, 
+                                GiaBan = chiTietDto.Dg * 1.2M, // Giá bán mặc định
                                 GiaVon = chiTietDto.Dg,
                                 TonKho = chiTietDto.Sl,
                                 ThoiGianTao = DateTime.Now
@@ -136,7 +128,7 @@ namespace QuanLyKho.Controllers
                             _context.HangHoas.Add(hangHoa); 
                         }
 
-                        // b. TẠO VÀ THÊM CHI TIẾT PHIẾU NHẬP MỚI
+                        // TẠO VÀ THÊM CHI TIẾT PHIẾU NHẬP MỚI
                         var chiTiet = new ChiTietPhieuNhap 
                         {
                             MaPN = newMaPN, MaHH = chiTietDto.MaHH, SoLuong = chiTietDto.Sl,
@@ -149,12 +141,11 @@ namespace QuanLyKho.Controllers
                     var ncc = _context.NCCs.FirstOrDefault(n => n.MaNCC == model.MaNCC);
                     if (ncc != null) 
                     {
-                        ncc.TongMua += totalCalculated; // <<< SỬ DỤNG GIÁ TRỊ TÍNH TOÁN TRÊN SERVER
+                        ncc.TongMua += totalCalculated; 
                         _context.NCCs.Update(ncc); 
                     }
 
-
-                    // 6. Thêm giao dịch vào lịch sử (Ví dụ: GD-00001)
+                    // 6. Thêm giao dịch vào lịch sử
                     var lastMaGD = _context.LichSuGiaoDichs.OrderByDescending(g => g.MaGiaoDich).Select(g => g.MaGiaoDich).FirstOrDefault();
                     int nextGdId = 1;
                     if (!string.IsNullOrEmpty(lastMaGD) && lastMaGD.StartsWith("GD-") && int.TryParse(lastMaGD.Substring(3), out int currentGdId)) 
@@ -170,79 +161,90 @@ namespace QuanLyKho.Controllers
                         LoaiGiaoDich = "Nhập hàng",
                         ThoiGian = DateTime.Now, 
                         DoiTac = ncc?.TenNCC ?? "N/A",
-                        GiaTri = totalCalculated, // <<< SỬ DỤNG GIÁ TRỊ TÍNH TOÁN TRÊN SERVER
-                        TrangThai = "Hoàn thành" 
+                        GiaTri = totalCalculated, 
+                        TrangThai = model.TienConNo > 0 ? "Công nợ" : "Đã thanh toán"
                     };
                     _context.LichSuGiaoDichs.Add(giaoDich);
-                    
-                    // 7. LƯU TẤT CẢ THAY ĐỔI trong một transaction
+
+                    // 7. LƯU VÀ COMMIT
                     _context.SaveChanges(); 
+                    transaction.Commit(); // Commit transaction khi tất cả đã thành công
 
                     return Json(new { success = true, message = "Thêm phiếu nhập thành công.", maPN = newMaPN });
                 }
-                catch (DbUpdateException ex)
-                {
-                    var innerExceptionMessage = ex.InnerException?.InnerException?.Message ?? ex.InnerException?.Message;
-                    // Log the full exception detail for server-side debugging
-                    Console.WriteLine("DbUpdateException: " + ex.ToString());
-                    return Json(new { success = false, message = "Lỗi Database: Kiểm tra khóa ngoại, giá trị NULL hoặc kiểu dữ liệu. Chi tiết: " + (innerExceptionMessage ?? ex.Message) });
-                }
                 catch (Exception ex)
                 {
-                    // Log the full exception detail for server-side debugging
-                    Console.WriteLine("General Exception: " + ex.ToString());
-                    return Json(new { success = false, message = "Lỗi khi lưu dữ liệu: " + ex.Message });
+                    transaction.Rollback(); // Rollback nếu có lỗi
+                    Console.WriteLine("Lỗi khi tạo Phiếu Nhập: " + ex.ToString());
+                    return Json(new { success = false, message = "Lỗi khi lưu dữ liệu. Chi tiết: " + ex.Message });
                 }
             }
-            
-            // Trả về JSON lỗi khi ModelState không hợp lệ
-            var errors = ModelState.Where(x => x.Value.Errors.Any()).Select(x => new { x.Key, x.Value.Errors }).ToList();
-            return Json(new { success = false, message = "Dữ liệu đầu vào không hợp lệ.", errors = errors });
         }
 
         // =========================================================
-        // 4. ACTION SEARCH HÀNG HÓA (AJAX) - Dùng cho Select2/Autocomplete
+        // 4. ACTION SEARCH HÀNG HÓA (AJAX) - ĐỔI TÊN THÀNH SearchProduct
         // =========================================================
         [HttpGet]
-        public IActionResult SearchHangHoa(string term)
+        public IActionResult SearchProduct(string term)
         {
-            // Kiểm tra và chuẩn hóa chuỗi tìm kiếm
-            if (string.IsNullOrEmpty(term))
+            var searchTerm = string.IsNullOrEmpty(term) ? "" : term.Trim().ToUpper();
+            
+            var query = _context.HangHoas.AsQueryable();
+
+            if (!string.IsNullOrEmpty(searchTerm))
             {
-                // Trả về một danh sách nhỏ các hàng hóa gần đây hoặc trống
-                var initialResults = _context.HangHoas
-                    .OrderByDescending(h => h.ThoiGianTao)
-                    .Take(10) // Lấy 10 mục gần nhất
-                    .Select(h => new
-                    {
-                        id = h.MaHang,
-                        text = $"{h.MaHang} - {h.TenHang} (Tồn: {h.TonKho})",
-                        maHang = h.MaHang,
-                        tenHang = h.TenHang,
-                        loaiHang = h.LoaiHang,
-                        giaVon = h.GiaVon,
-                        tonKho = h.TonKho
-                    }).ToList();
-                
-                return Json(new { results = initialResults });
+                query = query.Where(h => h.MaHang.ToUpper().Contains(searchTerm) || h.TenHang.ToUpper().Contains(searchTerm));
             }
-            var searchTerm = term.Trim().ToUpper();
-            var results = _context.HangHoas
-                .Where(h => h.MaHang.ToUpper().Contains(searchTerm) || h.TenHang.ToUpper().Contains(searchTerm))
-                .Take(50) // Giới hạn kết quả trả về để tối ưu hiệu suất
+            else
+            {
+                 // Nếu không có term, trả về 10 mục gần nhất
+                 query = query.OrderByDescending(h => h.ThoiGianTao).Take(10);
+            }
+
+            var results = query
+                .Take(50) // Giới hạn kết quả trả về
                 .Select(h => new
                 {
-                    id = h.MaHang, // BẮT BUỘC phải là 'id' (theo chuẩn Select2)
-                    text = $"{h.MaHang} - {h.TenHang} (Tồn: {h.TonKho})", // BẮT BUỘC phải là 'text' (theo chuẩn Select2)
+                    // LƯU Ý: Đổi tên các trường này để khớp với logic client-side của bạn
+                    id = h.MaHang,
+                    text = $"{h.MaHang} - {h.TenHang}", // Select2 sẽ hiển thị text này mặc định
                     maHang = h.MaHang,
                     tenHang = h.TenHang,
                     loaiHang = h.LoaiHang,
                     giaVon = h.GiaVon,
+                    // Nếu muốn client dùng GiaBan làm giá mặc định:
+                    giaBan = h.GiaBan, 
                     tonKho = h.TonKho
                 })
                 .ToList();
-                return Json(new { results = results });
+            
+            // Trả về trực tiếp list object. Client sẽ tự map id, text
+            // Bạn cần đảm bảo JS của bạn trong hàm processResults đang mong đợi một mảng (list)
+            return Json(results); 
         }
+        
+        // =========================================================
+        // 5. ACTION DETAILS (GET)
+        // =========================================================
+        // (Bạn nên thêm logic này nếu muốn xem chi tiết phiếu nhập)
+        // [HttpGet]
+        // public IActionResult Details(string id) { /* ... */ }
+
+        // =========================================================
+        // 6. ACTION EDIT (GET/POST)
+        // =========================================================
+        // (Bạn nên thêm logic này nếu muốn sửa phiếu nhập)
+        // [HttpGet]
+        // public IActionResult Edit(string id) { /* ... */ }
+        // [HttpPost]
+        // public IActionResult Edit(string id, [FromBody] PhieuNhapCreateModel model) { /* ... */ }
+
+        // =========================================================
+        // 7. ACTION DELETE (POST)
+        // =========================================================
+        // (Bạn nên thêm logic này nếu muốn xóa phiếu nhập)
+        // [HttpPost, ActionName("Delete")]
+        // public IActionResult DeleteConfirmed(string id) { /* ... */ }
 
     } 
 }
